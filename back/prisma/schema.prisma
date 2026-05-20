@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id               String                 @id @default(uuid())
+  username         String                 @unique
+  email            String                 @unique
+  password_hash    String
+  
+  createdAt        DateTime               @default(now()) @map("created_at")
+  updatedAt        DateTime               @updatedAt @map("updated_at")
+
+  ownedProjects    Project[]              @relation("ProjectOwner")
+  collaborations   ProjectCollaboration[]
+  submissions      PuzzleSubmission[]
+
+  @@map("users")
+}
+
+model Project {
+  id               String                 @id @default(uuid())
+  name             String
+  
+  ownerId          String                 @map("owner")
+  owner            User                   @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  
+  createdAt        DateTime               @default(now()) @map("created_at")
+  updatedAt        DateTime               @updatedAt @map("updated_at")
+
+  collaborators    ProjectCollaboration[]
+  shaders          ProjectShader[]
+
+  @@map("projects")
+}
+
+model Shader {
+  id               String                 @id @default(uuid())
+  graph            Json                   
+  code             String?
+  
+  createdAt        DateTime               @default(now()) @map("created_at")
+  updatedAt        DateTime               @updatedAt @map("updated_at")
+
+  // Relations
+  projectLinks     ProjectShader[]
+  puzzles          Puzzle[]               @relation("PuzzleSolution")
+  submissions      PuzzleSubmission[]     @relation("SubmissionShader")
+
+  @@map("shaders")
+}
+
+model ProjectShader {
+  shaderId         String                 @map("shader_id")
+  projectId        String                 @map("project_id")
+  name             String?
+
+  shader           Shader                 @relation(fields: [shaderId], references: [id], onDelete: Cascade)
+  project          Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@id([shaderId, projectId])
+  @@map("project_shaders")
+}
+
+model ProjectCollaboration {
+  userId           String                 @map("user_id")
+  projectId        String                 @map("project_id")
+  role             String                 @default("Viewer")
+  
+  user             User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project          Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@id([userId, projectId])
+  @@map("project_collaborations")
+}
+
+model Puzzle {
+  id               String                 @id @default(uuid())
+  name             String?
+  description      String?
+  
+  shaderId         String                 @map("shader_id")
+  solutionShader   Shader                 @relation("PuzzleSolution", fields: [shaderId], references: [id], onDelete: Cascade)
+
+  submissions      PuzzleSubmission[]
+
+  @@map("puzzles")
+}
+
+model PuzzleSubmission {
+  id               String                 @id @default(uuid())
+  rating           Float?
+  
+  puzzleId         String                 @map("puzzle_id")
+  puzzle           Puzzle                 @relation(fields: [puzzleId], references: [id], onDelete: Cascade)
+  
+  userId           String                 @map("user_id")
+  user             User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  shaderId         String                 @map("shader_id")
+  shader           Shader                 @relation("SubmissionShader", fields: [shaderId], references: [id], onDelete: Cascade)
+
+  @@map("puzzle_submitions")
+}
