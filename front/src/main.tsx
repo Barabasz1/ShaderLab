@@ -21,11 +21,12 @@ declare module "@tanstack/react-router" {
 keycloak
   .init({
     onLoad: "check-sso",
-    silentCheckSsoRedirectUri:
-      window.location.origin + "/silent-check-sso.html",
     pkceMethod: "S256",
   })
-  .then(() => {
+  .then((authenticated) => {
+    console.log("Keycloak init success, authenticated:", authenticated); // ← add this
+    const rootEl = document.getElementById("root");
+    console.log("Root element:", rootEl); // ← and this
     ReactDOM.createRoot(document.getElementById("root")!).render(
       <StrictMode>
         <RouterProvider router={router} />
