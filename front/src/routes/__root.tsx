@@ -1,3 +1,4 @@
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
 import type Keycloak from "keycloak-js";
 
@@ -15,7 +16,9 @@ export const Route = createRootRouteWithContext<RouterContext>()({
   component: () => (
     <div>
       <main>
-        <Outlet />
+        <ThemeProvider defaultTheme="light" storageKey="shaderlab-theme">
+          <Outlet />
+        </ThemeProvider>
       </main>
     </div>
   ),

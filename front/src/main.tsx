@@ -23,10 +23,7 @@ keycloak
     onLoad: "check-sso",
     pkceMethod: "S256",
   })
-  .then((authenticated) => {
-    console.log("Keycloak init success, authenticated:", authenticated); // ← add this
-    const rootEl = document.getElementById("root");
-    console.log("Root element:", rootEl); // ← and this
+  .then(() => {
     ReactDOM.createRoot(document.getElementById("root")!).render(
       <StrictMode>
         <RouterProvider router={router} />

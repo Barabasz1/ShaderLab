@@ -1,4 +1,6 @@
-import { LogoutButton } from "@/components/auth/LogoutButton";
+import { Dashboard } from "@/components/dashboard/Dashboard";
+import { Topbar } from "@/components/layout/Topbar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_auth/dashboard")({
@@ -7,9 +9,13 @@ export const Route = createFileRoute("/_auth/dashboard")({
 
 function RouteComponent() {
   return (
-    <div>
-      Hello "/dashboard"!
-      <LogoutButton className="ml-auto" />
-    </div>
+    <SidebarProvider>
+      <div className="flex flex-col h-screen w-full overflow-hidden">
+        <Topbar />
+        <div className="flex flex-1 overflow-hidden">
+          <Dashboard />
+        </div>
+      </div>
+    </SidebarProvider>
   );
 }
