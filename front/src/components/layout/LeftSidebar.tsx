@@ -78,13 +78,13 @@ export function LeftSidebar() {
 
   return (
     <Sidebar>
-      <SidebarHeader className="p-3">
+      {/*       <SidebarHeader className="p-3">
         <div className="flex items-center gap-2 font-semibold text-[13px]">
           <span className="text-blue-600">⬡</span>
           Nodes
         </div>
       </SidebarHeader>
-
+ */}
       <div className="px-3 pb-2">
         <Input
           placeholder="Search nodes…"
@@ -155,7 +155,11 @@ export function LeftSidebar() {
 
                           {item.inputs.length > 0 && (
                             <span className="text-[10px] text-muted-foreground truncate font-mono">
-                              ({item.inputs.map((p) => portTypeLabel(p.type)).join(", ")})
+                              (
+                              {item.inputs
+                                .map((p) => portTypeLabel(p.type))
+                                .join(", ")}
+                              )
                             </span>
                           )}
                         </div>

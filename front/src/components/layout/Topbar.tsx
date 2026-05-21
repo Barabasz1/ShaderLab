@@ -11,7 +11,7 @@ import { Link } from "@tanstack/react-router";
 export function Topbar() {
   return (
     <div className="h-11 shrink-0 flex items-center gap-2 px-3 border-b bg-background">
-      <SidebarTrigger />
+      {/* <SidebarTrigger /> */}
       <Link to="/">
         <span className="text-blue-600 text-base">⬡</span>
         <span className="text-[13px] font-semibold mr-2">NodeFlow</span>
