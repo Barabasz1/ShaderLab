@@ -17,14 +17,15 @@ provider "keycloak" {
 resource "keycloak_realm" "shaderlab_realm" {
   realm   = "shaderlab"
   enabled = true
+  registration_allowed = true
 }
 
-resource "keycloak_openid_client" "react_client" {
+resource "keycloak_openid_client" "shaderlab_client" {
   realm_id                     = keycloak_realm.shaderlab_realm.id 
-  client_id                    = "react-client"
+  client_id                    = "shaderlab_client"
   enabled                      = true
   access_type                  = "PUBLIC"
   standard_flow_enabled        = true
-  valid_redirect_uris          = ["http://localhost:3000/*"]
+  valid_redirect_uris          = ["http://localhost:5173/*"]
   web_origins                  = ["+"]
 }

@@ -1,25 +1,16 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Canvas } from "@/components/canvas/Canvas";
-import { RightPanel } from "@/components/layout/RightPanel";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { LeftSidebar } from "@/components/layout/LeftSidebar";
-import { Topbar } from "@/components/layout/Topbar";
+import { createFileRoute, Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
-  component: Editor,
+  component: RouteComponent,
 });
 
-function Editor() {
+function RouteComponent() {
   return (
-    <SidebarProvider>
-      <LeftSidebar />
-      <div className="flex flex-col h-screen w-full overflow-hidden">
-        <Topbar />
-        <div className="flex flex-1 overflow-hidden">
-          <Canvas />
-          <RightPanel />
-        </div>
-      </div>
-    </SidebarProvider>
+    <div className="flex gap-4 p-4">
+      <Link to="/">Home</Link>
+      <Link to="/dashboard">Dashboard</Link>
+      <Link to="/editor">Editor</Link>
+      <Link to="/settings">Editor</Link>
+    </div>
   );
 }

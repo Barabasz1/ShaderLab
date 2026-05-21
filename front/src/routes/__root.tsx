@@ -1,5 +1,16 @@
-import { createRootRoute, Outlet } from "@tanstack/react-router";
+import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
+import type Keycloak from "keycloak-js";
 
-export const Route = createRootRoute({
-  component: () => <Outlet />,
+interface RouterContext {
+  auth: Keycloak;
+}
+
+export const Route = createRootRouteWithContext<RouterContext>()({
+  component: () => (
+    <div>
+      <main>
+        <Outlet />
+      </main>
+    </div>
+  ),
 });
