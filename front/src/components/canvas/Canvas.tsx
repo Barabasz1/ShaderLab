@@ -1,19 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { NodeCard } from "./NodeCard";
-import { CAT, META } from "@/lib/constants";
-
-const INIT_NODES = [
-  { id: "n1", type: "number", x: 80, y: 110 },
-  { id: "n2", type: "number", x: 80, y: 240 },
-  { id: "n3", type: "add", x: 320, y: 165 },
-  { id: "n4", type: "output", x: 540, y: 165 },
-];
-const INIT_EDGES = [
-  { id: "e1", src: "n1", srcPort: "value", tgt: "n3", tgtPort: "a" },
-  { id: "e2", src: "n2", srcPort: "value", tgt: "n3", tgtPort: "b" },
-  { id: "e3", src: "n3", srcPort: "result", tgt: "n4", tgtPort: "value" },
-];
+import { canConnectPortTypes, nodeDefs } from "@/nodes/nodeDefs";
+import { setGraphState, type ControlValue } from "@/components/state/graphState";
 
 let uid = 100;
 const mkid = () => String(++uid);
@@ -23,9 +12,42 @@ function cubicBez(x1: number, y1: number, x2: number, y2: number) {
   return `M${x1},${y1} C${cx},${y1} ${cx},${y2} ${x2},${y2}`;
 }
 
+const getNodeDef = (type: string) => nodeDefs[type];
+
+const getControlValues = (type: string) => {
+  const def = nodeDefs[type];
+  const values: Record<string, ControlValue> = {};
+
+  if (!def) return values;
+
+  def.controls.forEach((control) => {
+    values[control.id] = control.default;
+  });
+
+  return values;
+};
+
 export function Canvas() {
-  const [nodes, setNodes] = useState(INIT_NODES);
-  const [edges, setEdges] = useState(INIT_EDGES);
+  const [nodes, setNodes] = useState([
+    {
+      id: "uv",
+      type: "uv",
+      x: 40,
+      y: 120,
+      controlValues: {},
+      inlineValues: {},
+    },
+    {
+      id: "output",
+      type: "output",
+      x: 520,
+      y: 120,
+      controlValues: {},
+      inlineValues: {},
+    },
+  ]);
+
+  const [edges, setEdges] = useState<any[]>([]);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [selectedEdge, setSelectedEdge] = useState<string | null>(null);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -45,6 +67,10 @@ export function Canvas() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  useEffect(() => {
+    setGraphState({ nodes, edges });
+  }, [nodes, edges]);
+
   const toWorld = (sx: number, sy: number) => ({
     x: (sx - pan.x) / zoom,
     y: (sy - pan.y) / zoom,
@@ -61,6 +87,14 @@ export function Canvas() {
       x: er.left + er.width / 2 - wr.left,
       y: er.top + er.height / 2 - wr.top,
     };
+  };
+
+
+  const onNodeDown = (e: React.MouseEvent, id: string) => {
+    if (e.button !== 0) return;
+    e.stopPropagation();
+    setSelectedNode(id);
+    setSelectedEdge(null);
   };
 
   const onNodeHeaderDown = (e: React.MouseEvent, id: string) => {
@@ -137,14 +171,26 @@ export function Canvas() {
 
   const onDrop = (e: React.DragEvent) => {
     e.preventDefault();
+
     const raw = e.dataTransfer.getData("application/nodeflow");
     if (!raw) return;
+
     const item = JSON.parse(raw);
+
     const rect = wrapRef.current!.getBoundingClientRect();
+
     const { x, y } = toWorld(e.clientX - rect.left, e.clientY - rect.top);
+
     setNodes((ns) => [
       ...ns,
-      { id: mkid(), type: item.type, x: x - 90, y: y - 35 },
+      {
+        id: mkid(),
+        type: item.type,
+        x: x - 90,
+        y: y - 35,
+        controlValues: getControlValues(item.type),
+        inlineValues: {},
+      },
     ]);
   };
 
@@ -175,6 +221,13 @@ export function Canvas() {
     window.addEventListener("mouseup", up);
   };
 
+  const getPortType = (nodeId: string, side: string, port: string) => {
+    const node = nodes.find((n) => n.id === nodeId);
+    const def = node ? getNodeDef(node.type) : null;
+    const ports = side === "out" ? def?.outputs : def?.inputs;
+    return ports?.find((p) => p.id === port)?.type ?? null;
+  };
+
   const onAnchorUp = (
     e: React.MouseEvent,
     nodeId: string,
@@ -190,8 +243,13 @@ export function Canvas() {
       src = { nodeId, port };
       tgt = { nodeId: connecting.nodeId, port: connecting.port };
     } else return;
+
+    const sourceType = getPortType(src.nodeId, "out", src.port);
+    const targetType = getPortType(tgt.nodeId, "in", tgt.port);
+    if (sourceType && targetType && !canConnectPortTypes(sourceType, targetType)) return;
+
     setEdges((es) => [
-      ...es,
+      ...es.filter((edge) => !(edge.tgt === tgt.nodeId && edge.tgtPort === tgt.port)),
       {
         id: mkid(),
         src: src.nodeId,
@@ -201,6 +259,79 @@ export function Canvas() {
       },
     ]);
   };
+
+  const onControlChange = useCallback(
+    (nodeId: string, controlId: string, value: ControlValue) => {
+      setNodes((ns) =>
+        ns.map((node) =>
+          node.id === nodeId
+            ? {
+                ...node,
+                controlValues: {
+                  ...(node.controlValues ?? {}),
+                  [controlId]: value,
+                },
+              }
+            : node,
+        ),
+      );
+    },
+    [],
+  );
+
+  const onInlineValueChange = useCallback(
+    (nodeId: string, inputId: string, value: ControlValue) => {
+      setNodes((ns) =>
+        ns.map((node) =>
+          node.id === nodeId
+            ? {
+                ...node,
+                inlineValues: {
+                  ...(node.inlineValues ?? {}),
+                  [inputId]: value,
+                },
+              }
+            : node,
+        ),
+      );
+    },
+    [],
+  );
+
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const editing =
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target?.isContentEditable;
+
+      if (editing || (e.key !== "Delete" && e.key !== "Backspace")) return;
+
+      if (selectedNode) {
+        const node = nodes.find((n) => n.id === selectedNode);
+        if (node && getNodeDef(node.type)?.deletable === false) return;
+
+        e.preventDefault();
+        setNodes((ns) => ns.filter((node) => node.id !== selectedNode));
+        setEdges((es) =>
+          es.filter((edge) => edge.src !== selectedNode && edge.tgt !== selectedNode),
+        );
+        setSelectedNode(null);
+        return;
+      }
+
+      if (selectedEdge) {
+        e.preventDefault();
+        setEdges((es) => es.filter((edge) => edge.id !== selectedEdge));
+        setSelectedEdge(null);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [nodes, selectedNode, selectedEdge]);
 
   const edgePoints = (edge: any) => {
     const sp = anchorCenter(edge.src, "out", edge.srcPort);
@@ -237,20 +368,29 @@ export function Canvas() {
         {edges.map((edge) => {
           const { sp, tp } = edgePoints(edge);
           if (!sp || !tp) return null;
+          const d = cubicBez(sp.x, sp.y, tp.x, tp.y);
+          const selectEdge = (e: React.MouseEvent) => {
+            e.stopPropagation();
+            setSelectedEdge(edge.id);
+            setSelectedNode(null);
+          };
+
           return (
-            <path
-              key={edge.id}
-              className={`fill-none stroke-2 pointer-events-auto cursor-pointer ${
-                selectedEdge === edge.id
-                  ? "stroke-blue-600"
-                  : "stroke-slate-300 hover:stroke-slate-400"
-              }`}
-              d={cubicBez(sp.x, sp.y, tp.x, tp.y)}
-              onClick={() => {
-                setSelectedEdge(edge.id);
-                setSelectedNode(null);
-              }}
-            />
+            <g key={edge.id}>
+              <path
+                className="fill-none stroke-transparent stroke-[16px] pointer-events-auto cursor-pointer"
+                d={d}
+                onMouseDown={selectEdge}
+              />
+              <path
+                className={`fill-none stroke-[3px] pointer-events-none ${
+                  selectedEdge === edge.id
+                    ? "stroke-blue-600"
+                    : "stroke-slate-300"
+                }`}
+                d={d}
+              />
+            </g>
           );
         })}
 
@@ -285,9 +425,12 @@ export function Canvas() {
             <NodeCard
               node={node}
               selected={selectedNode === node.id}
+              onNodeDown={onNodeDown}
               onHeaderDown={onNodeHeaderDown}
               onAnchorDown={onAnchorDown}
               onAnchorUp={onAnchorUp}
+              onControlChange={onControlChange}
+              onInlineValueChange={onInlineValueChange}
               anchorRefs={anchorRefs}
               connectedPorts={connectedPortsMap[node.id]}
             />
@@ -330,7 +473,11 @@ export function Canvas() {
           style={{ pointerEvents: "none" }}
         >
           {nodes.map((n) => {
-            const cat = CAT[META[n.type]?.cat] ?? CAT.Utility;
+            const def = getNodeDef(n.type);
+
+            const cat = def?.category ?? {
+              color: "hsl(215,20%,45%)",
+            };
             return (
               <rect
                 key={n.id}

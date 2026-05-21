@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
+import { requestCompile, saveGraphSnapshot } from "@/components/state/graphState";
 
 export function Topbar() {
   return (
@@ -12,8 +13,8 @@ export function Topbar() {
       <Button variant="outline" size="sm" className="h-7 px-2 text-xs">↩</Button>
       <Button variant="outline" size="sm" className="h-7 px-2 text-xs">↪</Button>
       <Separator orientation="vertical" className="h-4" />
-      <Button variant="outline" size="sm" className="h-7 px-2 text-xs">⊞ Save</Button>
-      <Button size="sm" className="ml-auto h-7 px-2 text-xs bg-blue-600 hover:bg-blue-700">▶ Run</Button>
+      <Button variant="outline" size="sm" className="h-7 px-2 text-xs" onClick={saveGraphSnapshot}>⊞ Save</Button>
+      <Button size="sm" className="ml-auto h-7 px-2 text-xs bg-blue-600 hover:bg-blue-700" onClick={requestCompile}>▶ Run</Button>
     </div>
   );
 }
