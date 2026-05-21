@@ -1,0 +1,25 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { Canvas } from "@/components/canvas/Canvas";
+import { RightPanel } from "@/components/layout/RightPanel";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { LeftSidebar } from "@/components/layout/LeftSidebar";
+import { Topbar } from "@/components/layout/Topbar";
+
+export const Route = createFileRoute("/editor")({
+  component: Editor,
+});
+
+function Editor() {
+  return (
+    <SidebarProvider>
+      <LeftSidebar />
+      <div className="flex flex-col h-screen w-full overflow-hidden">
+        <Topbar />
+        <div className="flex flex-1 overflow-hidden">
+          <Canvas />
+          <RightPanel />
+        </div>
+      </div>
+    </SidebarProvider>
+  );
+}
