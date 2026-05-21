@@ -1,0 +1,353 @@
+import { useState, useRef, useCallback, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { NodeCard } from "./NodeCard";
+import { CAT, META } from "@/lib/constants";
+
+const INIT_NODES = [
+  { id: "n1", type: "number", x: 80, y: 110 },
+  { id: "n2", type: "number", x: 80, y: 240 },
+  { id: "n3", type: "add", x: 320, y: 165 },
+  { id: "n4", type: "output", x: 540, y: 165 },
+];
+const INIT_EDGES = [
+  { id: "e1", src: "n1", srcPort: "value", tgt: "n3", tgtPort: "a" },
+  { id: "e2", src: "n2", srcPort: "value", tgt: "n3", tgtPort: "b" },
+  { id: "e3", src: "n3", srcPort: "result", tgt: "n4", tgtPort: "value" },
+];
+
+let uid = 100;
+const mkid = () => String(++uid);
+
+function cubicBez(x1: number, y1: number, x2: number, y2: number) {
+  const cx = (x1 + x2) / 2;
+  return `M${x1},${y1} C${cx},${y1} ${cx},${y2} ${x2},${y2}`;
+}
+
+export function Canvas() {
+  const [nodes, setNodes] = useState(INIT_NODES);
+  const [edges, setEdges] = useState(INIT_EDGES);
+  const [selectedNode, setSelectedNode] = useState<string | null>(null);
+  const [selectedEdge, setSelectedEdge] = useState<string | null>(null);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [connecting, setConnecting] = useState<any>(null);
+  const [mouse, setMouse] = useState({ x: 0, y: 0 });
+
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const anchorRefs = useRef<Record<string, HTMLDivElement>>({});
+
+  const [, forceUpdate] = useState({});
+  useEffect(() => {
+    forceUpdate({});
+
+    const handleResize = () => forceUpdate({});
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const toWorld = (sx: number, sy: number) => ({
+    x: (sx - pan.x) / zoom,
+    y: (sy - pan.y) / zoom,
+  });
+
+  const anchorCenter = (nodeId: string, side: string, port: string) => {
+    const key = `${nodeId}:${side}:${port}`;
+    const el = anchorRefs.current[key];
+    const wrap = wrapRef.current;
+    if (!el || !wrap) return null;
+    const er = el.getBoundingClientRect();
+    const wr = wrap.getBoundingClientRect();
+    return {
+      x: er.left + er.width / 2 - wr.left,
+      y: er.top + er.height / 2 - wr.top,
+    };
+  };
+
+  const onNodeHeaderDown = (e: React.MouseEvent, id: string) => {
+    if (e.button !== 0) return;
+    e.stopPropagation();
+    setSelectedNode(id);
+    setSelectedEdge(null);
+
+    const node = nodes.find((n) => n.id === id)!;
+    const ox = node.x,
+      oy = node.y;
+    const sx = e.clientX,
+      sy = e.clientY;
+
+    const move = (ev: MouseEvent) => {
+      const dx = (ev.clientX - sx) / zoom,
+        dy = (ev.clientY - sy) / zoom;
+      setNodes((ns) =>
+        ns.map((n) => (n.id === id ? { ...n, x: ox + dx, y: oy + dy } : n)),
+      );
+    };
+
+    const up = () => {
+      window.removeEventListener("mousemove", move);
+      window.removeEventListener("mouseup", up);
+    };
+
+    window.addEventListener("mousemove", move);
+    window.addEventListener("mouseup", up);
+  };
+
+  const onCanvasDown = (e: React.MouseEvent) => {
+    if (
+      e.target !== wrapRef.current &&
+      (e.target as Element).id !== "edges-svg" &&
+      !(e.target as Element).closest(".absolute")
+    ) {
+      setSelectedNode(null);
+      setSelectedEdge(null);
+      return;
+    }
+    if (e.button !== 0) return;
+    setSelectedNode(null);
+    setSelectedEdge(null);
+
+    const sx = e.clientX - pan.x,
+      sy = e.clientY - pan.y;
+    const move = (ev: MouseEvent) =>
+      setPan({ x: ev.clientX - sx, y: ev.clientY - sy });
+    const up = () => {
+      window.removeEventListener("mousemove", move);
+      window.removeEventListener("mouseup", up);
+    };
+
+    window.addEventListener("mousemove", move);
+    window.addEventListener("mouseup", up);
+  };
+
+  const onWheel = (e: React.WheelEvent) => {
+    const f = e.deltaY < 0 ? 1.1 : 0.91;
+    const rect = wrapRef.current!.getBoundingClientRect();
+    const mx = e.clientX - rect.left,
+      my = e.clientY - rect.top;
+
+    setZoom((z) => {
+      const nz = Math.min(3, Math.max(0.15, z * f));
+      setPan((p) => ({
+        x: mx - (mx - p.x) * (nz / z),
+        y: my - (my - p.y) * (nz / z),
+      }));
+      return nz;
+    });
+  };
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const raw = e.dataTransfer.getData("application/nodeflow");
+    if (!raw) return;
+    const item = JSON.parse(raw);
+    const rect = wrapRef.current!.getBoundingClientRect();
+    const { x, y } = toWorld(e.clientX - rect.left, e.clientY - rect.top);
+    setNodes((ns) => [
+      ...ns,
+      { id: mkid(), type: item.type, x: x - 90, y: y - 35 },
+    ]);
+  };
+
+  const onAnchorDown = (
+    e: React.MouseEvent,
+    nodeId: string,
+    port: string,
+    side: string,
+  ) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const c = anchorCenter(nodeId, side, port);
+    if (!c) return;
+    setConnecting({ nodeId, port, side, ax: c.x, ay: c.y });
+    const wr = wrapRef.current!.getBoundingClientRect();
+    setMouse({ x: e.clientX - wr.left, y: e.clientY - wr.top });
+
+    const move = (ev: MouseEvent) => {
+      const r = wrapRef.current!.getBoundingClientRect();
+      setMouse({ x: ev.clientX - r.left, y: ev.clientY - r.top });
+    };
+    const up = () => {
+      setConnecting(null);
+      window.removeEventListener("mousemove", move);
+      window.removeEventListener("mouseup", up);
+    };
+    window.addEventListener("mousemove", move);
+    window.addEventListener("mouseup", up);
+  };
+
+  const onAnchorUp = (
+    e: React.MouseEvent,
+    nodeId: string,
+    port: string,
+    side: string,
+  ) => {
+    if (!connecting || connecting.nodeId === nodeId) return;
+    let src, tgt;
+    if (connecting.side === "out" && side === "in") {
+      src = { nodeId: connecting.nodeId, port: connecting.port };
+      tgt = { nodeId, port };
+    } else if (connecting.side === "in" && side === "out") {
+      src = { nodeId, port };
+      tgt = { nodeId: connecting.nodeId, port: connecting.port };
+    } else return;
+    setEdges((es) => [
+      ...es,
+      {
+        id: mkid(),
+        src: src.nodeId,
+        srcPort: src.port,
+        tgt: tgt.nodeId,
+        tgtPort: tgt.port,
+      },
+    ]);
+  };
+
+  const edgePoints = (edge: any) => {
+    const sp = anchorCenter(edge.src, "out", edge.srcPort);
+    const tp = anchorCenter(edge.tgt, "in", edge.tgtPort);
+    return { sp, tp };
+  };
+
+  const connectedPortsMap: Record<string, Set<string>> = {};
+  edges.forEach((e) => {
+    if (!connectedPortsMap[e.src]) connectedPortsMap[e.src] = new Set();
+    if (!connectedPortsMap[e.tgt]) connectedPortsMap[e.tgt] = new Set();
+    connectedPortsMap[e.src].add(`out:${e.srcPort}`);
+    connectedPortsMap[e.tgt].add(`in:${e.tgtPort}`);
+  });
+
+  const nodeTransform = `translate(${pan.x}px,${pan.y}px) scale(${zoom})`;
+
+  return (
+    <div
+      id="canvas"
+      ref={wrapRef}
+      className={connecting ? "connecting" : ""}
+      onMouseDown={onCanvasDown}
+      onWheel={onWheel}
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={onDrop}
+    >
+      <svg
+        id="edges-svg"
+        className="absolute inset-0 overflow-visible pointer-events-none z-0 w-full h-full"
+      >
+        <g style={{ transform: nodeTransform, transformOrigin: "0 0" }}></g>
+
+        {edges.map((edge) => {
+          const { sp, tp } = edgePoints(edge);
+          if (!sp || !tp) return null;
+          return (
+            <path
+              key={edge.id}
+              className={`fill-none stroke-2 pointer-events-auto cursor-pointer ${
+                selectedEdge === edge.id
+                  ? "stroke-blue-600"
+                  : "stroke-slate-300 hover:stroke-slate-400"
+              }`}
+              d={cubicBez(sp.x, sp.y, tp.x, tp.y)}
+              onClick={() => {
+                setSelectedEdge(edge.id);
+                setSelectedNode(null);
+              }}
+            />
+          );
+        })}
+
+        {connecting && (
+          <path
+            className="fill-none stroke-blue-500 stroke-2 opacity-70"
+            strokeDasharray="6 3"
+            d={cubicBez(connecting.ax, connecting.ay, mouse.x, mouse.y)}
+          />
+        )}
+      </svg>
+
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          transform: nodeTransform,
+          transformOrigin: "0 0",
+          pointerEvents: "none",
+        }}
+      >
+        {nodes.map((node) => (
+          <div
+            key={node.id}
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              pointerEvents: "all",
+            }}
+          >
+            <NodeCard
+              node={node}
+              selected={selectedNode === node.id}
+              onHeaderDown={onNodeHeaderDown}
+              onAnchorDown={onAnchorDown}
+              onAnchorUp={onAnchorUp}
+              anchorRefs={anchorRefs}
+              connectedPorts={connectedPortsMap[node.id]}
+            />
+          </div>
+        ))}
+      </div>
+
+      <div className="absolute bottom-3 left-3 flex flex-col bg-white border rounded shadow-sm overflow-hidden">
+        <Button
+          variant="ghost"
+          className="h-8 w-8 rounded-none border-b"
+          onClick={() => setZoom((z) => Math.min(3, z * 1.2))}
+        >
+          +
+        </Button>
+        <Button
+          variant="ghost"
+          className="h-8 w-8 rounded-none border-b"
+          onClick={() => setZoom((z) => Math.max(0.15, z / 1.2))}
+        >
+          −
+        </Button>
+        <Button
+          variant="ghost"
+          className="h-8 w-8 rounded-none text-xs"
+          onClick={() => {
+            setZoom(1);
+            setPan({ x: 0, y: 0 });
+          }}
+        >
+          ⊡
+        </Button>
+      </div>
+
+      <div id="minimap">
+        <svg
+          width="148"
+          height="96"
+          viewBox="-40 -30 800 500"
+          style={{ pointerEvents: "none" }}
+        >
+          {nodes.map((n) => {
+            const cat = CAT[META[n.type]?.cat] ?? CAT.Utility;
+            return (
+              <rect
+                key={n.id}
+                x={n.x}
+                y={n.y}
+                width={180}
+                height={72}
+                rx={4}
+                fill={cat.color}
+                opacity={selectedNode === n.id ? 0.9 : 0.4}
+              />
+            );
+          })}
+        </svg>
+      </div>
+
+      <div id="zoom-badge">{Math.round(zoom * 100)}%</div>
+    </div>
+  );
+}
