@@ -33,8 +33,8 @@ export function Topbar({ children }: TopbarProps) {
       <Link to="/editor" className={navLinkClass}>
         Editor
       </Link>
-      <Link to="/settings" className={navLinkClass}>
-        Settings
+      <Link to="/profile" className={navLinkClass}>
+        Profile
       </Link>
 
 

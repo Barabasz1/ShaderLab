@@ -10,10 +10,7 @@ function RouteComponent() {
     <div className="flex flex-col h-screen w-full overflow-hidden">
       <Topbar />
       <div className="flex flex-1 overflow-hidden">
-        <Link to="/">Home</Link>
-        <Link to="/dashboard">Dashboard</Link>
-        <Link to="/editor">Editor</Link>
-        <Link to="/settings">Editor</Link>
+        HOME
       </div>
     </div>
   );
