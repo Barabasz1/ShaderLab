@@ -9,13 +9,13 @@ export const Route = createFileRoute("/_auth/dashboard")({
 
 function RouteComponent() {
   return (
-    <SidebarProvider>
-      <div className="flex flex-col h-screen w-full overflow-hidden">
-        <Topbar />
-        <div className="flex flex-1 overflow-hidden">
-          <Dashboard />
-        </div>
+    <div className="flex flex-col h-screen w-full overflow-hidden">
+      <Topbar>
+
+      </Topbar>
+      <div className="flex flex-1 overflow-hidden">
+        <Dashboard />
       </div>
-    </SidebarProvider>
+    </div>
   );
 }

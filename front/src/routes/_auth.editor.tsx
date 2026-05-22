@@ -2,6 +2,8 @@ import { Canvas } from "@/components/canvas/Canvas";
 import { LeftSidebar } from "@/components/layout/LeftSidebar";
 import { RightPanel } from "@/components/layout/RightPanel";
 import { Topbar } from "@/components/layout/Topbar";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { createFileRoute } from "@tanstack/react-router";
 
@@ -13,34 +15,42 @@ function RouteComponent() {
   return (
     <div className="[--header-height:calc(--spacing(14))]">
       <SidebarProvider className="flex flex-col">
-        <Topbar />
+        <Topbar >
+          <Button variant="outline" size="sm" className="h-7 px-2 text-xs">
+            ↩
+          </Button>
+          <Button variant="outline" size="sm" className="h-7 px-2 text-xs">
+            ↪
+          </Button>
+
+          <Separator orientation="vertical" className="h-6" />
+
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 px-2 text-xs"
+          >
+            ⊞ Save
+          </Button>
+
+          <Button
+            size="sm"
+            className="ml-auto h-7 px-2 text-xs bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            ▶ Run
+          </Button>
+
+          <Separator orientation="vertical" className="h-6" />
+        </Topbar>
+
         <div className="flex flex-1">
           <LeftSidebar />
-          <SidebarInset>
-            <div className="flex flex-1 flex-col gap-4 p-4">
-              <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-                <div className="aspect-video rounded-xl bg-muted/50" />
-                <div className="aspect-video rounded-xl bg-muted/50" />
-                <div className="aspect-video rounded-xl bg-muted/50" />
-              </div>
-              <div className="min-h-[100vh] flex-1 rounded-xl bg-muted/50 md:min-h-min" />
-            </div>
-          </SidebarInset>
-        </div>
-      </SidebarProvider>
-    </div>
-  );
-  /*   return (
-    <SidebarProvider>
-      <LeftSidebar />
-      <div className="flex flex-col h-screen w-full overflow-hidden">
-        <Topbar />
           <div className="flex flex-1 overflow-hidden">
             <Canvas />
             <RightPanel />
           </div>
-        </SidebarInset>
-      </div>
-    </SidebarProvider>
-  ); */
+        </div>
+      </SidebarProvider>
+    </div>
+  );
 }

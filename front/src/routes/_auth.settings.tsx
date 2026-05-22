@@ -1,3 +1,4 @@
+import { Topbar } from "@/components/layout/Topbar";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_auth/settings")({
@@ -5,5 +6,12 @@ export const Route = createFileRoute("/_auth/settings")({
 });
 
 function RouteComponent() {
-  return <div>Hello "/settings"!</div>;
+  return (
+    <div className="flex flex-col h-screen w-full overflow-hidden">
+      <Topbar />
+      <div className="flex flex-1 overflow-hidden">
+        Settings
+      </div>
+    </div>
+  );
 }
