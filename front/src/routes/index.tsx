@@ -1,3 +1,4 @@
+import { HomeScreen } from "@/components/home/Home";
 import { Topbar } from "@/components/layout/Topbar";
 import { createFileRoute, Link } from "@tanstack/react-router";
 
@@ -10,7 +11,7 @@ function RouteComponent() {
     <div className="flex flex-col h-screen w-full overflow-hidden">
       <Topbar />
       <div className="flex flex-1 overflow-hidden">
-        HOME
+      <HomeScreen/>
       </div>
     </div>
   );
