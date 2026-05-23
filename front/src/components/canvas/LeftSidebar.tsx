@@ -6,7 +6,6 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupLabel,
-  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -77,15 +76,10 @@ export function LeftSidebar() {
   }, [q]);
 
   return (
-    <Sidebar>
-      <SidebarHeader className="p-3">
-        <div className="flex items-center gap-2 font-semibold text-[13px]">
-          <span className="text-blue-600">⬡</span>
-          Nodes
-        </div>
-      </SidebarHeader>
-
-      <div className="px-3 pb-2">
+    <Sidebar
+      className="top-11 h-[calc(100svh-2.75rem)]!"
+    >
+      <div className="px-3 py-2">
         <Input
           placeholder="Search nodes…"
           value={query}
@@ -155,7 +149,11 @@ export function LeftSidebar() {
 
                           {item.inputs.length > 0 && (
                             <span className="text-[10px] text-muted-foreground truncate font-mono">
-                              ({item.inputs.map((p) => portTypeLabel(p.type)).join(", ")})
+                              (
+                              {item.inputs
+                                .map((p) => portTypeLabel(p.type))
+                                .join(", ")}
+                              )
                             </span>
                           )}
                         </div>

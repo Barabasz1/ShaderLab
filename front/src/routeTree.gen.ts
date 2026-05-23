@@ -11,9 +11,10 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthSettingsRouteImport } from './routes/_auth.settings'
-import { Route as AuthEditorRouteImport } from './routes/_auth.editor'
-import { Route as AuthDashboardRouteImport } from './routes/_auth.dashboard'
+import { Route as AuthProfileRouteImport } from './routes/_auth/profile'
+import { Route as AuthDashboardRouteImport } from './routes/_auth/dashboard'
+import { Route as AuthCreateProjectRouteImport } from './routes/_auth/createProject'
+import { Route as AuthEditorProjectIdRouteImport } from './routes/_auth/editor.$projectId'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/_auth',
@@ -24,14 +25,9 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthSettingsRoute = AuthSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AuthRoute,
-} as any)
-const AuthEditorRoute = AuthEditorRouteImport.update({
-  id: '/editor',
-  path: '/editor',
+const AuthProfileRoute = AuthProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => AuthRoute,
 } as any)
 const AuthDashboardRoute = AuthDashboardRouteImport.update({
@@ -39,39 +35,58 @@ const AuthDashboardRoute = AuthDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthCreateProjectRoute = AuthCreateProjectRouteImport.update({
+  id: '/createProject',
+  path: '/createProject',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthEditorProjectIdRoute = AuthEditorProjectIdRouteImport.update({
+  id: '/editor/$projectId',
+  path: '/editor/$projectId',
+  getParentRoute: () => AuthRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/createProject': typeof AuthCreateProjectRoute
   '/dashboard': typeof AuthDashboardRoute
-  '/editor': typeof AuthEditorRoute
-  '/settings': typeof AuthSettingsRoute
+  '/profile': typeof AuthProfileRoute
+  '/editor/$projectId': typeof AuthEditorProjectIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/createProject': typeof AuthCreateProjectRoute
   '/dashboard': typeof AuthDashboardRoute
-  '/editor': typeof AuthEditorRoute
-  '/settings': typeof AuthSettingsRoute
+  '/profile': typeof AuthProfileRoute
+  '/editor/$projectId': typeof AuthEditorProjectIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_auth': typeof AuthRouteWithChildren
+  '/_auth/createProject': typeof AuthCreateProjectRoute
   '/_auth/dashboard': typeof AuthDashboardRoute
-  '/_auth/editor': typeof AuthEditorRoute
-  '/_auth/settings': typeof AuthSettingsRoute
+  '/_auth/profile': typeof AuthProfileRoute
+  '/_auth/editor/$projectId': typeof AuthEditorProjectIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/editor' | '/settings'
+  fullPaths:
+    | '/'
+    | '/createProject'
+    | '/dashboard'
+    | '/profile'
+    | '/editor/$projectId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/editor' | '/settings'
+  to: '/' | '/createProject' | '/dashboard' | '/profile' | '/editor/$projectId'
   id:
     | '__root__'
     | '/'
     | '/_auth'
+    | '/_auth/createProject'
     | '/_auth/dashboard'
-    | '/_auth/editor'
-    | '/_auth/settings'
+    | '/_auth/profile'
+    | '/_auth/editor/$projectId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -95,18 +110,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_auth/settings': {
-      id: '/_auth/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AuthSettingsRouteImport
-      parentRoute: typeof AuthRoute
-    }
-    '/_auth/editor': {
-      id: '/_auth/editor'
-      path: '/editor'
-      fullPath: '/editor'
-      preLoaderRoute: typeof AuthEditorRouteImport
+    '/_auth/profile': {
+      id: '/_auth/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthProfileRouteImport
       parentRoute: typeof AuthRoute
     }
     '/_auth/dashboard': {
@@ -116,19 +124,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthDashboardRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/createProject': {
+      id: '/_auth/createProject'
+      path: '/createProject'
+      fullPath: '/createProject'
+      preLoaderRoute: typeof AuthCreateProjectRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/editor/$projectId': {
+      id: '/_auth/editor/$projectId'
+      path: '/editor/$projectId'
+      fullPath: '/editor/$projectId'
+      preLoaderRoute: typeof AuthEditorProjectIdRouteImport
+      parentRoute: typeof AuthRoute
+    }
   }
 }
 
 interface AuthRouteChildren {
+  AuthCreateProjectRoute: typeof AuthCreateProjectRoute
   AuthDashboardRoute: typeof AuthDashboardRoute
-  AuthEditorRoute: typeof AuthEditorRoute
-  AuthSettingsRoute: typeof AuthSettingsRoute
+  AuthProfileRoute: typeof AuthProfileRoute
+  AuthEditorProjectIdRoute: typeof AuthEditorProjectIdRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
+  AuthCreateProjectRoute: AuthCreateProjectRoute,
   AuthDashboardRoute: AuthDashboardRoute,
-  AuthEditorRoute: AuthEditorRoute,
-  AuthSettingsRoute: AuthSettingsRoute,
+  AuthProfileRoute: AuthProfileRoute,
+  AuthEditorProjectIdRoute: AuthEditorProjectIdRoute,
 }
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)

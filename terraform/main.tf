@@ -29,3 +29,4 @@ resource "keycloak_openid_client" "shaderlab_client" {
   valid_redirect_uris          = ["http://localhost:5173/*"]
   web_origins                  = ["+"]
 }
+

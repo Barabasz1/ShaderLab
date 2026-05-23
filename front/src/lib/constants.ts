@@ -1,11 +1,3 @@
-export const CAT: Record<string, { color: string; bg: string }> = {
-  Math: { color: "hsl(199,89%,48%)", bg: "hsl(199,89%,94%)" },
-  Logic: { color: "hsl(263,70%,58%)", bg: "hsl(263,70%,95%)" },
-  Data: { color: "hsl(43,96%,42%)", bg: "hsl(43,96%,94%)" },
-  IO: { color: "hsl(152,60%,40%)", bg: "hsl(152,60%,94%)" },
-  Utility: { color: "hsl(0,0%,42%)", bg: "hsl(0,0%,94%)" },
-};
-
 export const CATALOG = [
   {
     cat: "Math",

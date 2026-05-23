@@ -2,7 +2,12 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { NodeCard } from "./NodeCard";
 import { canConnectPortTypes, nodeDefs } from "@/nodes/nodeDefs";
-import { setGraphState, type ControlValue } from "@/components/state/graphState";
+import {
+  setGraphState,
+  type ControlValue,
+} from "@/components/state/graphState";
+import { Badge } from "../ui/badge";
+import { Maximize2, Minus, Plus } from "lucide-react";
 
 let uid = 100;
 const mkid = () => String(++uid);
@@ -88,7 +93,6 @@ export function Canvas() {
       y: er.top + er.height / 2 - wr.top,
     };
   };
-
 
   const onNodeDown = (e: React.MouseEvent, id: string) => {
     if (e.button !== 0) return;
@@ -246,10 +250,17 @@ export function Canvas() {
 
     const sourceType = getPortType(src.nodeId, "out", src.port);
     const targetType = getPortType(tgt.nodeId, "in", tgt.port);
-    if (sourceType && targetType && !canConnectPortTypes(sourceType, targetType)) return;
+    if (
+      sourceType &&
+      targetType &&
+      !canConnectPortTypes(sourceType, targetType)
+    )
+      return;
 
     setEdges((es) => [
-      ...es.filter((edge) => !(edge.tgt === tgt.nodeId && edge.tgtPort === tgt.port)),
+      ...es.filter(
+        (edge) => !(edge.tgt === tgt.nodeId && edge.tgtPort === tgt.port),
+      ),
       {
         id: mkid(),
         src: src.nodeId,
@@ -298,7 +309,6 @@ export function Canvas() {
     [],
   );
 
-
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
@@ -316,7 +326,9 @@ export function Canvas() {
         e.preventDefault();
         setNodes((ns) => ns.filter((node) => node.id !== selectedNode));
         setEdges((es) =>
-          es.filter((edge) => edge.src !== selectedNode && edge.tgt !== selectedNode),
+          es.filter(
+            (edge) => edge.src !== selectedNode && edge.tgt !== selectedNode,
+          ),
         );
         setSelectedNode(null);
         return;
@@ -353,7 +365,7 @@ export function Canvas() {
     <div
       id="canvas"
       ref={wrapRef}
-      className={connecting ? "connecting" : ""}
+      className={`h-full relative overflow-hidden bg-background bg-[radial-gradient(circle,hsl(var(--dot-color))_1px,transparent_1px)] bg-size-[20px_20px] ${connecting ? "cursor-crosshair" : "cursor-default"}`}
       onMouseDown={onCanvasDown}
       onWheel={onWheel}
       onDragOver={(e) => e.preventDefault()}
@@ -438,63 +450,46 @@ export function Canvas() {
         ))}
       </div>
 
-      <div className="absolute bottom-3 left-3 flex flex-col bg-white border rounded shadow-sm overflow-hidden">
+      <div className="absolute bottom-4 left-4 flex flex-col bg-background/80 backdrop-blur-md border rounded-md shadow-sm overflow-hidden">
         <Button
           variant="ghost"
-          className="h-8 w-8 rounded-none border-b"
+          size="icon"
+          className="h-8 w-8 rounded-none border-b hover:bg-muted"
           onClick={() => setZoom((z) => Math.min(3, z * 1.2))}
         >
-          +
+          <Plus className="h-4 w-4" />
         </Button>
+
         <Button
           variant="ghost"
-          className="h-8 w-8 rounded-none border-b"
+          size="icon"
+          className="h-8 w-8 rounded-none border-b hover:bg-muted"
           onClick={() => setZoom((z) => Math.max(0.15, z / 1.2))}
         >
-          −
+          <Minus className="h-4 w-4" />
         </Button>
+
         <Button
           variant="ghost"
-          className="h-8 w-8 rounded-none text-xs"
+          size="icon"
+          className="h-8 w-8 rounded-none hover:bg-muted"
           onClick={() => {
             setZoom(1);
             setPan({ x: 0, y: 0 });
           }}
         >
-          ⊡
+          <Maximize2 className="h-3 w-3" />
         </Button>
       </div>
 
-      <div id="minimap">
-        <svg
-          width="148"
-          height="96"
-          viewBox="-40 -30 800 500"
-          style={{ pointerEvents: "none" }}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50">
+        <Badge
+          variant="outline"
+          className="font-mono bg-background/80 backdrop-blur-md text-muted-foreground"
         >
-          {nodes.map((n) => {
-            const def = getNodeDef(n.type);
-
-            const cat = def?.category ?? {
-              color: "hsl(215,20%,45%)",
-            };
-            return (
-              <rect
-                key={n.id}
-                x={n.x}
-                y={n.y}
-                width={180}
-                height={72}
-                rx={4}
-                fill={cat.color}
-                opacity={selectedNode === n.id ? 0.9 : 0.4}
-              />
-            );
-          })}
-        </svg>
+          {Math.round(zoom * 100)}%
+        </Badge>
       </div>
-
-      <div id="zoom-badge">{Math.round(zoom * 100)}%</div>
     </div>
   );
 }

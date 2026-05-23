@@ -1,17 +1,17 @@
-import { HomeScreen } from "@/components/home/Home";
+import { Dashboard } from "@/components/dashboard/Dashboard";
 import { Topbar } from "@/components/layout/Topbar";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_auth/dashboard")({
   component: RouteComponent,
 });
 
 function RouteComponent() {
   return (
     <div className="flex flex-col h-screen w-full overflow-hidden">
-      <Topbar />
+      <Topbar/>
       <div className="flex flex-1 overflow-hidden">
-      <HomeScreen/>
+        <Dashboard />
       </div>
     </div>
   );

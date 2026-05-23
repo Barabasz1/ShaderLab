@@ -54,4 +54,17 @@ export class ProjectsController {
     if (!project) throw new NotFoundException('Project not found');
     return project;
   }
+
+  @Get()
+  @ApiOperation({ summary: 'Get all projects for the authenticated user' })
+  async getUserProjects(@AuthenticatedUser() user: any) {
+    return this.prisma.project.findMany({
+      where: { ownerId: user.sub },
+      include: {
+        _count: {
+          select: { shaders: true },
+        },
+      },
+    });
+  }
 }

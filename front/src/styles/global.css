@@ -7,12 +7,60 @@
 
 @theme inline {
   --color-brand: hsl(221, 83%, 53%);
+  --color-brand-dark: hsl(221, 83%, 33%);
   --color-brand-light: hsl(221, 83%, 95%);
   --radius: 0.625rem;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --border-radius-sm: calc(var(--radius) - 4px);
+  --border-radius-md: calc(var(--radius) - 2px);
+  --border-radius-lg: var(--radius);
+  --border-radius-xl: calc(var(--radius) + 4px);
 }
 
 @layer base {
   :root {
+    --node-input-fg: 152 60% 40%;
+    --node-input-bg: 152 60% 94%;
+    --node-math-fg: 199 89% 48%;
+    --node-math-bg: 199 89% 94%;
+    --node-adv-math-fg: 263 70% 58%;
+    --node-adv-math-bg: 263 70% 95%;
+    --node-vector-fg: 330 81% 60%;
+    --node-vector-bg: 330 81% 96%;
+    --node-procedural-fg: 32 95% 44%;
+    --node-procedural-bg: 32 95% 95%;
+    --node-output-fg: 0 84% 60%;
+    --node-output-bg: 0 84% 96%;
+    
+    --dot-color: 220 13% 83%;
+
     --background: oklch(1 0 0);
     --foreground: oklch(0.145 0 0);
     --card: oklch(1 0 0);
@@ -33,6 +81,21 @@
     --border: oklch(0.922 0 0);
   }
   .dark {
+    --node-input-fg: 152 60% 60%;
+    --node-input-bg: 152 60% 12%;
+    --node-math-fg: 199 89% 65%;
+    --node-math-bg: 199 89% 12%;
+    --node-adv-math-fg: 263 70% 75%;
+    --node-adv-math-bg: 263 70% 12%;
+    --node-vector-fg: 330 81% 75%;
+    --node-vector-bg: 330 81% 12%;
+    --node-procedural-fg: 32 95% 65%;
+    --node-procedural-bg: 32 95% 12%;
+    --node-output-fg: 0 84% 70%;
+    --node-output-bg: 0 84% 15%;
+
+    --dot-color: 220 13% 20%;
+
     --background: oklch(0.145 0 0);
     --foreground: oklch(0.985 0 0);
     --card: oklch(0.205 0 0);
@@ -72,23 +135,6 @@ body,
   overflow: hidden;
 }
 
-#canvas {
-  flex: 1;
-  position: relative;
-  overflow: hidden;
-  background-color: hsl(220, 16%, 96%);
-  background-image: radial-gradient(
-    circle,
-    hsl(220, 13%, 83%) 1px,
-    transparent 1px
-  );
-  background-size: 20px 20px;
-  cursor: default;
-}
-
-#canvas.connecting {
-  cursor: crosshair;
-}
 #edges-svg {
   position: absolute;
   inset: 0;
@@ -143,22 +189,6 @@ body,
   border-radius: var(--radius);
   overflow: hidden;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.07);
-}
-
-#zoom-badge {
-  position: absolute;
-  bottom: 14px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 2px 10px;
-  font-size: 10px;
-  font-family: monospace;
-  color: var(--muted-foreground);
-  pointer-events: none;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 #right-panel-wrap {
@@ -261,59 +291,4 @@ body,
 }
 .anchor.connected {
   opacity: 1;
-}
-
-.port-label {
-  font-size: 10px;
-  font-family: var(--font-mono);
-  color: var(--muted-foreground);
-  line-height: 1;
-}
-
-.inline-port-popup {
-  position: absolute;
-  top: 50%;
-  right: calc(100% + 10px);
-  transform: translateY(-50%);
-  height: 18px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0 5px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  box-shadow: 0 4px 14px rgba(0,0,0,.12);
-  z-index: 40;
-}
-
-.inline-port-field {
-  height: 14px;
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 9px;
-  font-family: var(--font-mono);
-  color: var(--muted-foreground);
-  white-space: nowrap;
-}
-
-
-.inline-port-field input {
-  width: 42px;
-  height: 14px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 0 5px;
-  font-size: 9px;
-  line-height: 14px;
-  background: hsl(220, 16%, 96%);
-  color: var(--foreground);
-  outline: none;
-}
-
-
-.inline-port-field input:focus {
-  border-color: var(--brand);
-  box-shadow: 0 0 0 2px var(--brand-light);
 }
