@@ -4,13 +4,24 @@ import { NodeCard } from "./NodeCard";
 import { canConnectPortTypes, nodeDefs } from "@/nodes/nodeDefs";
 import {
   setGraphState,
+  UiEdge,
+  UiNode,
+  useGraphState,
   type ControlValue,
 } from "@/components/state/graphState";
 import { Badge } from "../ui/badge";
 import { Maximize2, Minus, Plus } from "lucide-react";
 
 let uid = 100;
-const mkid = () => String(++uid);
+const makeId = () => String(++uid);
+
+export const syncUid = (nodes: UiNode[], edges: UiEdge[]) => {
+  let ids = [...nodes, ...edges].map((x) => parseInt(x.id)).filter(isFinite);
+
+  if (ids.length === 0) return;
+
+  uid = Math.max(uid, ...ids);
+};
 
 function cubicBez(x1: number, y1: number, x2: number, y2: number) {
   const cx = (x1 + x2) / 2;
@@ -33,26 +44,7 @@ const getControlValues = (type: string) => {
 };
 
 export function Canvas() {
-  const [nodes, setNodes] = useState([
-    {
-      id: "uv",
-      type: "uv",
-      x: 40,
-      y: 120,
-      controlValues: {},
-      inlineValues: {},
-    },
-    {
-      id: "output",
-      type: "output",
-      x: 520,
-      y: 120,
-      controlValues: {},
-      inlineValues: {},
-    },
-  ]);
-
-  const [edges, setEdges] = useState<any[]>([]);
+  const { nodes, edges } = useGraphState();
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [selectedEdge, setSelectedEdge] = useState<string | null>(null);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -71,10 +63,6 @@ export function Canvas() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
-  useEffect(() => {
-    setGraphState({ nodes, edges });
-  }, [nodes, edges]);
 
   const toWorld = (sx: number, sy: number) => ({
     x: (sx - pan.x) / zoom,
@@ -116,9 +104,11 @@ export function Canvas() {
     const move = (ev: MouseEvent) => {
       const dx = (ev.clientX - sx) / zoom,
         dy = (ev.clientY - sy) / zoom;
-      setNodes((ns) =>
-        ns.map((n) => (n.id === id ? { ...n, x: ox + dx, y: oy + dy } : n)),
-      );
+      setGraphState({
+        nodes: nodes.map((n) =>
+          n.id === id ? { ...n, x: ox + dx, y: oy + dy } : n,
+        ),
+      });
     };
 
     const up = () => {
@@ -185,17 +175,19 @@ export function Canvas() {
 
     const { x, y } = toWorld(e.clientX - rect.left, e.clientY - rect.top);
 
-    setNodes((ns) => [
-      ...ns,
-      {
-        id: mkid(),
-        type: item.type,
-        x: x - 90,
-        y: y - 35,
-        controlValues: getControlValues(item.type),
-        inlineValues: {},
-      },
-    ]);
+    setGraphState({
+      nodes: [
+        ...nodes,
+        {
+          id: makeId(),
+          type: item.type,
+          x: x - 90,
+          y: y - 35,
+          controlValues: getControlValues(item.type),
+          inlineValues: {},
+        },
+      ],
+    });
   };
 
   const onAnchorDown = (
@@ -257,24 +249,26 @@ export function Canvas() {
     )
       return;
 
-    setEdges((es) => [
-      ...es.filter(
-        (edge) => !(edge.tgt === tgt.nodeId && edge.tgtPort === tgt.port),
-      ),
-      {
-        id: mkid(),
-        src: src.nodeId,
-        srcPort: src.port,
-        tgt: tgt.nodeId,
-        tgtPort: tgt.port,
-      },
-    ]);
+    setGraphState({
+      edges: [
+        ...edges.filter(
+          (edge) => !(edge.tgt === tgt.nodeId && edge.tgtPort === tgt.port),
+        ),
+        {
+          id: makeId(),
+          src: src.nodeId,
+          srcPort: src.port,
+          tgt: tgt.nodeId,
+          tgtPort: tgt.port,
+        },
+      ],
+    });
   };
 
   const onControlChange = useCallback(
     (nodeId: string, controlId: string, value: ControlValue) => {
-      setNodes((ns) =>
-        ns.map((node) =>
+      setGraphState({
+        nodes: nodes.map((node) =>
           node.id === nodeId
             ? {
                 ...node,
@@ -285,15 +279,15 @@ export function Canvas() {
               }
             : node,
         ),
-      );
+      });
     },
     [],
   );
 
   const onInlineValueChange = useCallback(
     (nodeId: string, inputId: string, value: ControlValue) => {
-      setNodes((ns) =>
-        ns.map((node) =>
+      setGraphState({
+        nodes: nodes.map((node) =>
           node.id === nodeId
             ? {
                 ...node,
@@ -304,7 +298,7 @@ export function Canvas() {
               }
             : node,
         ),
-      );
+      });
     },
     [],
   );
@@ -324,19 +318,23 @@ export function Canvas() {
         if (node && getNodeDef(node.type)?.deletable === false) return;
 
         e.preventDefault();
-        setNodes((ns) => ns.filter((node) => node.id !== selectedNode));
-        setEdges((es) =>
-          es.filter(
+        setGraphState({
+          nodes: nodes.filter((node) => node.id !== selectedNode),
+        });
+        setGraphState({
+          edges: edges.filter(
             (edge) => edge.src !== selectedNode && edge.tgt !== selectedNode,
           ),
-        );
+        });
         setSelectedNode(null);
         return;
       }
 
       if (selectedEdge) {
         e.preventDefault();
-        setEdges((es) => es.filter((edge) => edge.id !== selectedEdge));
+        setGraphState({
+          edges: edges.filter((edge) => edge.id !== selectedEdge),
+        });
         setSelectedEdge(null);
       }
     };

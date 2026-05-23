@@ -12,7 +12,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import keycloak from "@/auth/keycloak";
+import keycloak from "@/lib/keycloak";
 
 export function ProfileScreen() {
     const handleLogout = () => {

@@ -145,7 +145,7 @@ export function NodeCard({
 
   return (
     <div
-      className={`node${selected ? " selected" : ""}`}
+      className={`node${selected ? " selected z-100" : ""}`}
       style={{ left: node.x, top: node.y, width: nodeWidth }}
       onMouseDown={(e) => onNodeDown(e, node.id)}
     >

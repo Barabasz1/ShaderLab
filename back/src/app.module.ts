@@ -14,6 +14,7 @@ import { ProjectsModule } from './projects/projects.module';
 import { UsersModule } from './users/users.module';
 import { PuzzlesModule } from './puzzles/puzzles.module';
 import { UserSyncInterceptor } from './users/user-sync.interceptor';
+import { ShadersModule } from './shaders/shaders.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { UserSyncInterceptor } from './users/user-sync.interceptor';
     UsersModule,
     ProjectsModule,
     PuzzlesModule,
+    ShadersModule,
     KeycloakConnectModule.registerAsync({
       useFactory: (config: ConfigService) => ({
         authServerUrl: config.get<string>('KEYCLOAK_AUTH_SERVER_URL'),

@@ -1,4 +1,4 @@
-import { Canvas } from "@/components/canvas/Canvas";
+import { Canvas, syncUid } from "@/components/canvas/Canvas";
 import { LeftSidebar } from "@/components/canvas/LeftSidebar";
 import { RightPanel } from "@/components/canvas/RightPanel";
 import { Topbar } from "@/components/layout/Topbar";
@@ -14,8 +14,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import {
   requestCompile,
   saveGraphSnapshot,
+  setGraphState,
+  useGraphState,
 } from "@/components/state/graphState";
-import { Play, Redo2, Save, Undo2 } from "lucide-react";
+import { Loader2, Play, Redo2, Save, Undo2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import keycloak from "@/lib/keycloak";
+import { authFetch } from "@/lib/authFetch";
 
 export const Route = createFileRoute("/_auth/editor/$projectId")({
   component: RouteComponent,
@@ -23,6 +28,57 @@ export const Route = createFileRoute("/_auth/editor/$projectId")({
 
 function RouteComponent() {
   const { projectId } = Route.useParams();
+  const graph = useGraphState();
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const save = async () => {
+    if (!keycloak.authenticated) return;
+    setIsSaving(true);
+    try {
+      const res = await authFetch(
+        `/api/shaders/project/${projectId}/autosave`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({
+            graph: { nodes: graph.nodes, edges: graph.edges },
+            code: graph.glslCode,
+          }),
+        },
+      );
+
+      if (!res.ok) throw new Error("Failed to save");
+    } catch (err) {
+      console.error("Failed to save:", err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  useEffect(() => {
+    authFetch(`/api/shaders/project/${projectId}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load");
+        return res.json();
+      })
+      .then((data) => {
+        const nodes = data.graph?.nodes ?? [];
+        const edges = data.graph?.edges ?? [];
+        syncUid(nodes, edges);
+        setGraphState({ nodes, edges, glslCode: data.code ?? "" });
+      })
+      .catch(console.error)
+      .finally(() => setIsLoading(false));
+  }, [projectId]);
+
+  if (isLoading) {
+    return (
+      <div className="h-svh flex items-center justify-center">
+        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <div className="h-svh flex flex-col overflow-hidden">
       <Topbar>
@@ -33,8 +89,18 @@ function RouteComponent() {
           <Redo2 className="w-3.5 h-3.5" />
         </Button>
         <Separator orientation="vertical" className="h-6" />
-        <Button variant="outline" size="sm" className="h-7 px-2 text-xs">
-          <Save className="w-3.5 h-3.5" />
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-7 px-2 text-xs"
+          onClick={() => save()}
+          disabled={isSaving}
+        >
+          {isSaving ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <Save className="w-3.5 h-3.5" />
+          )}
           Save
         </Button>
         <Button

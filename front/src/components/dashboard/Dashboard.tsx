@@ -3,7 +3,7 @@ import { Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProjectCard } from "@/components/dashboard/ProjectCard";
 import { Link } from "@tanstack/react-router";
-import keycloak from "@/auth/keycloak";
+import keycloak from "@/lib/keycloak";
 
 interface BackendProject {
   id: string;
