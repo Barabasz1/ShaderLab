@@ -365,7 +365,7 @@ export function Canvas() {
     <div
       id="canvas"
       ref={wrapRef}
-      className={`flex-1 relative overflow-hidden bg-background bg-[radial-gradient(circle,hsl(var(--dot-color))_1px,transparent_1px)] bg-size-[20px_20px] ${connecting ? "cursor-crosshair" : "cursor-default"}`}
+      className={`h-full relative overflow-hidden bg-background bg-[radial-gradient(circle,hsl(var(--dot-color))_1px,transparent_1px)] bg-size-[20px_20px] ${connecting ? "cursor-crosshair" : "cursor-default"}`}
       onMouseDown={onCanvasDown}
       onWheel={onWheel}
       onDragOver={(e) => e.preventDefault()}
@@ -480,35 +480,6 @@ export function Canvas() {
         >
           <Maximize2 className="h-3 w-3" />
         </Button>
-      </div>
-
-      <div className="absolute bottom-3.5 right-3.5 h-24 w-37 overflow-hidden rounded-s border border-border bg-background shadow-sm">
-        <svg
-          width="148"
-          height="96"
-          viewBox="-40 -30 800 500"
-          style={{ pointerEvents: "none" }}
-        >
-          {nodes.map((n) => {
-            const def = getNodeDef(n.type);
-
-            const cat = def?.category ?? {
-              color: "hsl(215,20%,45%)",
-            };
-            return (
-              <rect
-                key={n.id}
-                x={n.x}
-                y={n.y}
-                width={180}
-                height={72}
-                rx={4}
-                fill={cat.color}
-                opacity={selectedNode === n.id ? 0.9 : 0.4}
-              />
-            );
-          })}
-        </svg>
       </div>
 
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50">

@@ -3,9 +3,19 @@ import { LeftSidebar } from "@/components/canvas/LeftSidebar";
 import { RightPanel } from "@/components/canvas/RightPanel";
 import { Topbar } from "@/components/layout/Topbar";
 import { Button } from "@/components/ui/button";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { createFileRoute } from "@tanstack/react-router";
+import {
+  requestCompile,
+  saveGraphSnapshot,
+} from "@/components/state/graphState";
+import { Play, Redo2, Save, Undo2 } from "lucide-react";
 
 export const Route = createFileRoute("/_auth/editor/$projectId")({
   component: RouteComponent,
@@ -14,39 +24,46 @@ export const Route = createFileRoute("/_auth/editor/$projectId")({
 function RouteComponent() {
   const { projectId } = Route.useParams();
   return (
-    <div className="[--header-height:calc(--spacing(14))]">
-      <SidebarProvider className="flex flex-col">
-        <Topbar>
-          <Button variant="outline" size="sm" className="h-7 px-2 text-xs">
-            ↩
-          </Button>
-          <Button variant="outline" size="sm" className="h-7 px-2 text-xs">
-            ↪
-          </Button>
+    <div className="h-svh flex flex-col overflow-hidden">
+      <Topbar>
+        <Button variant="outline" size="sm" className="h-7 px-2 text-xs">
+          <Undo2 className="w-3.5 h-3.5" />
+        </Button>
+        <Button variant="outline" size="sm" className="h-7 px-2 text-xs">
+          <Redo2 className="w-3.5 h-3.5" />
+        </Button>
+        <Separator orientation="vertical" className="h-6" />
+        <Button variant="outline" size="sm" className="h-7 px-2 text-xs">
+          <Save className="w-3.5 h-3.5" />
+          Save
+        </Button>
+        <Button
+          size="sm"
+          className="ml-auto h-7 px-2 text-xs bg-primary text-primary-foreground hover:bg-primary/90"
+          onClick={requestCompile}
+        >
+          <Play className="w-3.5 h-3.5" />
+          Run
+        </Button>
+        <Separator orientation="vertical" className="h-6" />
+      </Topbar>
 
-          <Separator orientation="vertical" className="h-6" />
-
-          <Button variant="outline" size="sm" className="h-7 px-2 text-xs">
-            ⊞ Save
-          </Button>
-
-          <Button
-            size="sm"
-            className="ml-auto h-7 px-2 text-xs bg-primary text-primary-foreground hover:bg-primary/90"
+      <SidebarProvider className="min-h-0 w-full h-[calc(100svh-2.75rem)]!">
+        <LeftSidebar />
+        <SidebarInset className="flex flex-col min-h-0 overflow-hidden">
+          <ResizablePanelGroup
+            orientation="horizontal"
+            className="flex-1 min-h-0"
           >
-            ▶ Run
-          </Button>
-
-          <Separator orientation="vertical" className="h-6" />
-        </Topbar>
-
-        <div className="flex flex-1">
-          <LeftSidebar />
-          <div className="flex flex-1 overflow-hidden">
-            <Canvas />
-            <RightPanel />
-          </div>
-        </div>
+            <ResizablePanel defaultSize={"75%"} minSize={"40%"}>
+              <Canvas />
+            </ResizablePanel>
+            <ResizableHandle />
+            <ResizablePanel defaultSize={"20%"} minSize={"15%"} maxSize={"30%"}>
+              <RightPanel />
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        </SidebarInset>
       </SidebarProvider>
     </div>
   );

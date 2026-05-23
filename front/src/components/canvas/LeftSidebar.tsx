@@ -77,7 +77,7 @@ export function LeftSidebar() {
 
   return (
     <Sidebar
-      className="top-11 h-[calc(100svh-var(--header-height))]!"
+      className="top-11 h-[calc(100svh-2.75rem)]!"
     >
       <div className="px-3 py-2">
         <Input

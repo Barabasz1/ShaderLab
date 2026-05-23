@@ -61,7 +61,7 @@ function InlineInputPopup({
 
   return (
     <div
-      className="inline-port-popup"
+      className="absolute top-1/2 -translate-y-1/2 right-[calc(100%+10px)] h-[18px] flex items-center gap-1.5 px-[5px] bg-card border border-border rounded-full shadow-[0_4px_14px_rgba(0,0,0,0.12)] z-40"
       onMouseDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
     >
@@ -70,9 +70,11 @@ function InlineInputPopup({
         const label = part ? part.toUpperCase() : port.label;
         const fallback = part === "w" ? 1 : 0;
         const value = node.inlineValues?.[key] ?? fallback;
-
         return (
-          <label key={key} className="inline-port-field">
+          <label
+            key={key}
+            className="h-[14px] flex items-center gap-[3px] text-[9px] font-mono text-muted-foreground whitespace-nowrap"
+          >
             <span>{label}</span>
             <input
               type="text"
@@ -86,6 +88,7 @@ function InlineInputPopup({
                 if (e.target.value === "")
                   onInlineValueChange(node.id, key, fallback);
               }}
+              className="w-[42px] h-[14px] border border-border rounded-full px-[5px] text-[9px] leading-[14px] bg-muted text-foreground outline-none focus:border-primary"
             />
           </label>
         );
@@ -208,7 +211,9 @@ export function NodeCard({
                   }}
                 />
 
-                <span className="port-label">{p.label}</span>
+                <span className="text-[10px] font-mono text-muted-foreground leading-none">
+                  {p.label}
+                </span>
 
                 {isOpen && (
                   <InlineInputPopup
@@ -225,7 +230,9 @@ export function NodeCard({
         <div className="ports-col right">
           {def.outputs.map((p) => (
             <div key={p.id} className="port-row right">
-              <span className="port-label">{p.label}</span>
+              <span className="text-[10px] font-mono text-muted-foreground leading-none">
+                {p.label}
+              </span>
 
               <div
                 className={`anchor${
@@ -295,7 +302,7 @@ export function NodeCard({
                       if (e.target.value === "")
                         onControlChange(node.id, control.id, 0);
                     }}
-                    className="h-6 min-w-0 flex-1 rounded border bg-white px-1 text-[10px] text-foreground"
+                    className="border border-border rounded-full px-[5px] text-[9px] leading-[14px] bg-muted text-foreground outline-none focus:border-primary"
                   />
                 )}
               </label>
