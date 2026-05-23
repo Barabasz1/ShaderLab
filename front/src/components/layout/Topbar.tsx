@@ -33,7 +33,7 @@ export function Topbar({ children }: TopbarProps) {
 
       <Separator orientation="vertical" className="h-6" />
 
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ml-auto h-full flex items-center gap-2">
         {children}
 
         <ThemeToggle />

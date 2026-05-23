@@ -71,14 +71,6 @@ function RouteComponent() {
       .finally(() => setIsLoading(false));
   }, [projectId]);
 
-  if (isLoading) {
-    return (
-      <div className="h-svh flex items-center justify-center">
-        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
   return (
     <div className="h-svh flex flex-col overflow-hidden">
       <Topbar>
@@ -122,7 +114,13 @@ function RouteComponent() {
             className="flex-1 min-h-0"
           >
             <ResizablePanel defaultSize={"75%"} minSize={"40%"}>
-              <Canvas />
+              {isLoading ? (
+                <div className="h-full flex items-center justify-center">
+                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <Canvas />
+              )}
             </ResizablePanel>
             <ResizableHandle />
             <ResizablePanel defaultSize={"20%"} minSize={"15%"} maxSize={"30%"}>

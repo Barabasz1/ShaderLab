@@ -88,37 +88,8 @@ const toCompilerEdges = (edges: UiEdge[]): CompilerEdge[] =>
   }));
 
 export function RightPanel() {
-  const [w, setW] = useState(320);
-  const start = useRef<{ x: number; w: number } | null>(null);
   const canvasRef = useRef<ShaderCanvasHandle>(null);
   const graph = useGraphState();
-
-  const onHandleDown = (e: React.MouseEvent) => {
-    start.current = { x: e.clientX, w };
-    document.body.style.cursor = "col-resize";
-    document.body.style.userSelect = "none";
-
-    const move = (ev: MouseEvent) => {
-      if (start.current) {
-        setW(
-          Math.min(
-            600,
-            Math.max(240, start.current.w + start.current.x - ev.clientX),
-          ),
-        );
-      }
-    };
-
-    const up = () => {
-      document.body.style.cursor = "";
-      document.body.style.userSelect = "";
-      window.removeEventListener("mousemove", move);
-      window.removeEventListener("mouseup", up);
-    };
-
-    window.addEventListener("mousemove", move);
-    window.addEventListener("mouseup", up);
-  };
 
   useEffect(() => {
     if (!graph.compileRequest) return;
@@ -182,7 +153,7 @@ export function RightPanel() {
             )}
           </div>
           {error && (
-            <pre className="text-red-600 whitespace-pre-wrap rounded-md border bg-red-50 p-2 font-mono">
+            <pre className="text-red-600 whitespace-pre-wrap rounded-md border border-red-600 bg-muted/30 p-2 text-[11px] font-mono">
               {error}
             </pre>
           )}

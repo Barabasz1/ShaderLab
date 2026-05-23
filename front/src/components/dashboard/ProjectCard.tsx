@@ -1,15 +1,31 @@
-import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Card,
-  CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { Link } from "@tanstack/react-router";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuPortal,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  MoreHorizontal,
+  MoreVertical,
+  Pencil,
+  PencilIcon,
+  Trash2,
+  TrashIcon,
+} from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 
 interface ProjectCardProps {
   id: string;
@@ -17,7 +33,8 @@ interface ProjectCardProps {
   description: string;
   lastModified: string;
   thumbnailGradient: string;
-  onOpen: (id: string) => void;
+  onDelete: (id: string) => void;
+  onEdit: (id: string) => void;
 }
 
 export function ProjectCard({
@@ -26,21 +43,46 @@ export function ProjectCard({
   description,
   lastModified,
   thumbnailGradient,
-  onOpen,
-}: ProjectCardProps) {
+  onDelete,
+  onEdit,
+}: ProjectCardProps & {
+  onDelete: (id: string) => void;
+  onEdit: (id: string) => void;
+}) {
   return (
-    <Card className="flex flex-col overflow-hidden pt-0">
-      <div className={`h-40 w-full bg-gradient-to-br ${thumbnailGradient}`} />
+    <Card className="flex flex-col pt-0">
+      <div
+        className={`h-40 w-full bg-linear-to-br ${thumbnailGradient} relative`}
+      >
+        <DropdownMenu>
+          <DropdownMenuTrigger  className="absolute top-3 right-2 h-7 w-7">
+            <Button variant="ghost" className="w-7 h-7">
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
 
-      <CardHeader>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => onEdit(id)}>
+              <PencilIcon />
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem variant="destructive" onClick={() => onDelete(id)}>
+              <TrashIcon />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      <CardHeader className="relative">
         <CardTitle>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
-
       <CardFooter className="flex justify-between items-center border-t pt-6">
         <span className="text-sm text-muted-foreground">{lastModified}</span>
         <Link to="/editor/$projectId" params={{ projectId: id }}>
-          <Button variant="default" onClick={() => onOpen(id)}>
+          <Button variant="default" >
             <Pencil className="mr-2 h-4 w-4" />
             Open Editor
           </Button>

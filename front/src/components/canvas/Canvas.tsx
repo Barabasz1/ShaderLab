@@ -1,8 +1,9 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useLayoutEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { NodeCard } from "./NodeCard";
 import { canConnectPortTypes, nodeDefs } from "@/nodes/nodeDefs";
 import {
+  getGraphState,
   setGraphState,
   UiEdge,
   UiNode,
@@ -56,6 +57,11 @@ export function Canvas() {
   const anchorRefs = useRef<Record<string, HTMLDivElement>>({});
 
   const [, forceUpdate] = useState({});
+
+  useLayoutEffect(() => {
+    forceUpdate({});
+  }, [pan, zoom, nodes]);
+
   useEffect(() => {
     forceUpdate({});
 
@@ -95,7 +101,7 @@ export function Canvas() {
     setSelectedNode(id);
     setSelectedEdge(null);
 
-    const node = nodes.find((n) => n.id === id)!;
+    const node = getGraphState().nodes.find((n) => n.id === id)!;
     const ox = node.x,
       oy = node.y;
     const sx = e.clientX,
@@ -105,7 +111,7 @@ export function Canvas() {
       const dx = (ev.clientX - sx) / zoom,
         dy = (ev.clientY - sy) / zoom;
       setGraphState({
-        nodes: nodes.map((n) =>
+        nodes: getGraphState().nodes.map((n) =>
           n.id === id ? { ...n, x: ox + dx, y: oy + dy } : n,
         ),
       });
@@ -218,7 +224,7 @@ export function Canvas() {
   };
 
   const getPortType = (nodeId: string, side: string, port: string) => {
-    const node = nodes.find((n) => n.id === nodeId);
+    const node = getGraphState().nodes.find((n) => n.id === nodeId);
     const def = node ? getNodeDef(node.type) : null;
     const ports = side === "out" ? def?.outputs : def?.inputs;
     return ports?.find((p) => p.id === port)?.type ?? null;
@@ -268,7 +274,7 @@ export function Canvas() {
   const onControlChange = useCallback(
     (nodeId: string, controlId: string, value: ControlValue) => {
       setGraphState({
-        nodes: nodes.map((node) =>
+        nodes: getGraphState().nodes.map((node) =>
           node.id === nodeId
             ? {
                 ...node,
@@ -287,7 +293,7 @@ export function Canvas() {
   const onInlineValueChange = useCallback(
     (nodeId: string, inputId: string, value: ControlValue) => {
       setGraphState({
-        nodes: nodes.map((node) =>
+        nodes: getGraphState().nodes.map((node) =>
           node.id === nodeId
             ? {
                 ...node,
@@ -314,12 +320,14 @@ export function Canvas() {
       if (editing || (e.key !== "Delete" && e.key !== "Backspace")) return;
 
       if (selectedNode) {
-        const node = nodes.find((n) => n.id === selectedNode);
+        const node = getGraphState().nodes.find((n) => n.id === selectedNode);
         if (node && getNodeDef(node.type)?.deletable === false) return;
 
         e.preventDefault();
         setGraphState({
-          nodes: nodes.filter((node) => node.id !== selectedNode),
+          nodes: getGraphState().nodes.filter(
+            (node) => node.id !== selectedNode,
+          ),
         });
         setGraphState({
           edges: edges.filter(
@@ -373,8 +381,6 @@ export function Canvas() {
         id="edges-svg"
         className="absolute inset-0 overflow-visible pointer-events-none z-0 w-full h-full"
       >
-        <g style={{ transform: nodeTransform, transformOrigin: "0 0" }}></g>
-
         {edges.map((edge) => {
           const { sp, tp } = edgePoints(edge);
           if (!sp || !tp) return null;
@@ -422,7 +428,7 @@ export function Canvas() {
           pointerEvents: "none",
         }}
       >
-        {nodes.map((node) => (
+        {getGraphState().nodes.map((node) => (
           <div
             key={node.id}
             style={{

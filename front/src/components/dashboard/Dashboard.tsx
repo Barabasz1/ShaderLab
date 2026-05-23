@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { ProjectCard } from "@/components/dashboard/ProjectCard";
 import { Link } from "@tanstack/react-router";
 import keycloak from "@/lib/keycloak";
+import { authFetch } from "@/lib/authFetch";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
 
 interface BackendProject {
   id: string;
@@ -32,6 +34,8 @@ export function Dashboard() {
   const [projects, setProjects] = useState<BackendProject[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -61,8 +65,18 @@ export function Dashboard() {
     fetchProjects();
   }, []);
 
-  const handleOpen = (id: string) => {
-    console.log(`Navigating to /editor/${id}`);
+  const handleDelete = async () => {
+    if (!deletingId) return;
+    setIsDeleting(true);
+    try {
+      await authFetch(`/api/projects/${deletingId}`, { method: "DELETE" });
+      setProjects((ps) => ps.filter((p) => p.id !== deletingId));
+      setDeletingId(null);
+    } catch (err) {
+      console.error("Failed to delete:", err);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -108,10 +122,44 @@ export function Dashboard() {
               description={`TODO`}
               lastModified={new Date(project.updatedAt).toLocaleDateString()}
               thumbnailGradient={getGradientForId(project.id)}
-              onOpen={handleOpen}
+              onDelete={setDeletingId}
+              onEdit={() => {}}
             />
           ))}
         </div>
+      )}
+
+      {deletingId && (
+        <AlertDialog open onOpenChange={() => setDeletingId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete project?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete{" "}
+                <span className="font-medium text-foreground">
+                  {projects.find((p) => p.id === deletingId)?.name}
+                </span>{" "}
+                and all its shaders. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isDeleting}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                variant="destructive"
+                onClick={handleDelete}
+                disabled={isDeleting}
+              >
+                {isDeleting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "Delete"
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       )}
     </div>
   );

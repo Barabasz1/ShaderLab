@@ -5,6 +5,8 @@ import {
   Param,
   Body,
   NotFoundException,
+  Delete,
+  ForbiddenException,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { AuthenticatedUser, Unprotected } from 'nest-keycloak-connect';
@@ -66,5 +68,15 @@ export class ProjectsController {
         },
       },
     });
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete a project' })
+  async deleteProject(@Param('id') id: string, @AuthenticatedUser() user: any) {
+    const project = await this.prisma.project.findUnique({ where: { id } });
+    if (!project) throw new NotFoundException('Project not found');
+    if (project.ownerId !== user.sub)
+      throw new ForbiddenException('Not the project owner');
+    return this.prisma.project.delete({ where: { id } });
   }
 }
