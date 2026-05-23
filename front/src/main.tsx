@@ -20,7 +20,6 @@ declare module "@tanstack/react-router" {
 
 keycloak
   .init({
-    onLoad: "check-sso",
     pkceMethod: "S256",
     checkLoginIframe: false,
   })

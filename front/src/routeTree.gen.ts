@@ -11,10 +11,10 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthProfileRouteImport } from './routes/_auth.profile'
-import { Route as AuthDashboardRouteImport } from './routes/_auth.dashboard'
-import { Route as AuthCreateProjectRouteImport } from './routes/_auth.createProject'
-import { Route as AuthEditorProjectIdRouteImport } from './routes/_auth.editor.$projectId'
+import { Route as AuthProfileRouteImport } from './routes/_auth/profile'
+import { Route as AuthDashboardRouteImport } from './routes/_auth/dashboard'
+import { Route as AuthCreateProjectRouteImport } from './routes/_auth/createProject'
+import { Route as AuthEditorProjectIdRouteImport } from './routes/_auth/editor.$projectId'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/_auth',
