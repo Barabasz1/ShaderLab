@@ -7,15 +7,16 @@ import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/_auth/editor")({
+export const Route = createFileRoute("/_auth/editor/$projectId")({
   component: RouteComponent,
 });
 
 function RouteComponent() {
+  const { projectId } = Route.useParams();
   return (
     <div className="[--header-height:calc(--spacing(14))]">
       <SidebarProvider className="flex flex-col">
-        <Topbar >
+        <Topbar>
           <Button variant="outline" size="sm" className="h-7 px-2 text-xs">
             ↩
           </Button>
@@ -25,11 +26,7 @@ function RouteComponent() {
 
           <Separator orientation="vertical" className="h-6" />
 
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 px-2 text-xs"
-          >
+          <Button variant="outline" size="sm" className="h-7 px-2 text-xs">
             ⊞ Save
           </Button>
 

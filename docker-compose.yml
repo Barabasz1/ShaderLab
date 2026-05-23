@@ -6,7 +6,7 @@ services:
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: password123
-      POSTGRES_DB: mydatabase
+      POSTGRES_DB: nestjs_db
     ports:
       - "5432:5432"
     volumes:
@@ -34,11 +34,13 @@ services:
     container_name: nestjs_api
     ports:
       - "3000:3000"
+    extra_hosts:
+      - "localhost:host-gateway"
     environment:
       DATABASE_URL: postgresql://admin:password123@postgres:5432/nestjs_db?schema=public
-      KEYCLOAK_AUTH_SERVER_URL: http://keycloak:8080
-      KEYCLOAK_REALM: myrealm
-      KEYCLOAK_CLIENT_ID: nestjs-backend
+      KEYCLOAK_AUTH_SERVER_URL: http://localhost:8080
+      KEYCLOAK_REALM: shaderlab
+      KEYCLOAK_CLIENT_ID: shaderlab_client
     depends_on:
       - postgres
       - keycloak

@@ -22,6 +22,7 @@ keycloak
   .init({
     onLoad: "check-sso",
     pkceMethod: "S256",
+    checkLoginIframe: false,
   })
   .then(() => {
     ReactDOM.createRoot(document.getElementById("root")!).render(
