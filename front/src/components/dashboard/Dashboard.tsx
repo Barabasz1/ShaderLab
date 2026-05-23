@@ -1,41 +1,66 @@
-import { Plus } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProjectCard } from "@/components/dashboard/ProjectCard";
 import { Link } from "@tanstack/react-router";
+import keycloak from "@/auth/keycloak";
 
-const MOCK_PROJECTS = [
-  {
-    id: "proj-1",
-    title: "Neon Waveform",
-    description: "An audio-reactive fragment shader experimenting with raymarching and neon glow effects.",
-    lastModified: "2 hours ago",
-    thumbnailGradient: "from-cyan-500 via-blue-500 to-indigo-500",
-  },
-  {
-    id: "proj-2",
-    title: "Liquid Chrome",
-    description: "Simulating metallic fluid dynamics using WebGL noise functions.",
-    lastModified: "Yesterday",
-    thumbnailGradient: "from-slate-400 via-zinc-500 to-neutral-700",
-  },
-  {
-    id: "proj-3",
-    title: "Cosmic Dust Particles",
-    description: "A million-particle simulation of a rotating galaxy using compute shaders.",
-    lastModified: "3 days ago",
-    thumbnailGradient: "from-purple-600 via-fuchsia-500 to-pink-500",
-  },
-  {
-    id: "proj-4",
-    title: "Voxel Terrain Gen",
-    description: "Infinite procedural terrain generation using 3D Perlin noise and marching cubes.",
-    lastModified: "Last week",
-    thumbnailGradient: "from-emerald-400 via-green-500 to-teal-700",
-  }
-];
+interface BackendProject {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+  _count: {
+    shaders: number;
+  };
+}
 
+const getGradientForId = (id: string) => {
+  const gradients = [
+    "from-cyan-500 via-blue-500 to-indigo-500",
+    "from-purple-600 via-fuchsia-500 to-pink-500",
+    "from-emerald-400 via-green-500 to-teal-700",
+    "from-orange-400 via-red-500 to-rose-600",
+  ];
+  const charCodeSum = id
+    .split("")
+    .reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  return gradients[charCodeSum % gradients.length];
+};
 
 export function Dashboard() {
+  const [projects, setProjects] = useState<BackendProject[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      if (!keycloak.authenticated) return;
+
+      try {
+        await keycloak.updateToken(30);
+
+        const response = await fetch("/api/projects", {
+          headers: {
+            Authorization: `Bearer ${keycloak.token}`,
+          },
+        });
+
+        if (!response.ok) throw new Error("Failed to fetch projects");
+
+        const data = await response.json();
+        setProjects(data);
+      } catch (err) {
+        console.error("Failed to fetch projects:", err);
+        setError("Could not load projects.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
+
   const handleOpen = (id: string) => {
     console.log(`Navigating to /editor/${id}`);
   };
@@ -56,22 +81,38 @@ export function Dashboard() {
             New Project
           </Button>
         </Link>
-
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {MOCK_PROJECTS.map((project) => (
-          <ProjectCard
-            key={project.id}
-            id={project.id}
-            title={project.title}
-            description={project.description}
-            lastModified={project.lastModified}
-            thumbnailGradient={project.thumbnailGradient}
-            onOpen={handleOpen}
-          />
-        ))}
-      </div>
+      {isLoading ? (
+        <div className="flex justify-center items-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : error ? (
+        <div className="text-red-500 bg-red-500/10 p-4 rounded-md">{error}</div>
+      ) : projects.length === 0 ? (
+        <div className="text-center p-12 border border-dashed rounded-lg">
+          <p className="text-muted-foreground mb-4">
+            You don't have any projects yet.
+          </p>
+          <Link to="/createProject">
+            <Button variant="outline">Create your first project</Button>
+          </Link>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {projects.map((project) => (
+            <ProjectCard
+              key={project.id}
+              id={project.id}
+              title={project.name}
+              description={`TODO`}
+              lastModified={new Date(project.updatedAt).toLocaleDateString()}
+              thumbnailGradient={getGradientForId(project.id)}
+              onOpen={handleOpen}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

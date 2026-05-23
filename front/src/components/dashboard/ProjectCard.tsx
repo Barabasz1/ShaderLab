@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Link } from "@tanstack/react-router";
 
 interface ProjectCardProps {
   id: string;
@@ -37,15 +38,14 @@ export function ProjectCard({
       </CardHeader>
 
       <CardFooter className="flex justify-between items-center border-t pt-6">
-        <span className="text-sm text-muted-foreground">
-          {lastModified}
-        </span>
-        <Button variant="default" onClick={() => onOpen(id)}>
-          <Pencil className="mr-2 h-4 w-4" />
-          Open Editor
-        </Button>
+        <span className="text-sm text-muted-foreground">{lastModified}</span>
+        <Link to="/editor/$projectId" params={{ projectId: id }}>
+          <Button variant="default" onClick={() => onOpen(id)}>
+            <Pencil className="mr-2 h-4 w-4" />
+            Open Editor
+          </Button>
+        </Link>
       </CardFooter>
     </Card>
   );
 }
-

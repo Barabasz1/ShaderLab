@@ -27,13 +27,9 @@ export function Topbar({ children }: TopbarProps) {
       <Link to="/dashboard" className={navLinkClass}>
         Dashboard
       </Link>
-      <Link to="/editor" className={navLinkClass}>
-        Editor
-      </Link>
       <Link to="/profile" className={navLinkClass}>
         Profile
       </Link>
-
 
       <Separator orientation="vertical" className="h-6" />
 
