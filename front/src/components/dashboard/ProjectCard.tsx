@@ -15,7 +15,6 @@ interface ProjectCardProps {
   title: string;
   description: string;
   lastModified: string;
-  tags: string[];
   thumbnailGradient: string;
   onOpen: (id: string) => void;
 }
@@ -25,7 +24,6 @@ export function ProjectCard({
   title,
   description,
   lastModified,
-  tags,
   thumbnailGradient,
   onOpen,
 }: ProjectCardProps) {
@@ -37,16 +35,6 @@ export function ProjectCard({
         <CardTitle>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
-
-      <CardContent className="flex-1">
-        <div className="flex flex-wrap gap-2">
-          {tags.map((tag) => (
-            <Badge key={tag} variant="secondary">
-              {tag}
-            </Badge>
-          ))}
-        </div>
-      </CardContent>
 
       <CardFooter className="flex justify-between items-center border-t pt-6">
         <span className="text-sm text-muted-foreground">

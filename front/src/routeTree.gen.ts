@@ -14,6 +14,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthProfileRouteImport } from './routes/_auth.profile'
 import { Route as AuthEditorRouteImport } from './routes/_auth.editor'
 import { Route as AuthDashboardRouteImport } from './routes/_auth.dashboard'
+import { Route as AuthCreateProjectRouteImport } from './routes/_auth.createProject'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/_auth',
@@ -39,15 +40,22 @@ const AuthDashboardRoute = AuthDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthCreateProjectRoute = AuthCreateProjectRouteImport.update({
+  id: '/createProject',
+  path: '/createProject',
+  getParentRoute: () => AuthRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/createProject': typeof AuthCreateProjectRoute
   '/dashboard': typeof AuthDashboardRoute
   '/editor': typeof AuthEditorRoute
   '/profile': typeof AuthProfileRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/createProject': typeof AuthCreateProjectRoute
   '/dashboard': typeof AuthDashboardRoute
   '/editor': typeof AuthEditorRoute
   '/profile': typeof AuthProfileRoute
@@ -56,19 +64,21 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_auth': typeof AuthRouteWithChildren
+  '/_auth/createProject': typeof AuthCreateProjectRoute
   '/_auth/dashboard': typeof AuthDashboardRoute
   '/_auth/editor': typeof AuthEditorRoute
   '/_auth/profile': typeof AuthProfileRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/editor' | '/profile'
+  fullPaths: '/' | '/createProject' | '/dashboard' | '/editor' | '/profile'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/editor' | '/profile'
+  to: '/' | '/createProject' | '/dashboard' | '/editor' | '/profile'
   id:
     | '__root__'
     | '/'
     | '/_auth'
+    | '/_auth/createProject'
     | '/_auth/dashboard'
     | '/_auth/editor'
     | '/_auth/profile'
@@ -116,16 +126,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthDashboardRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/createProject': {
+      id: '/_auth/createProject'
+      path: '/createProject'
+      fullPath: '/createProject'
+      preLoaderRoute: typeof AuthCreateProjectRouteImport
+      parentRoute: typeof AuthRoute
+    }
   }
 }
 
 interface AuthRouteChildren {
+  AuthCreateProjectRoute: typeof AuthCreateProjectRoute
   AuthDashboardRoute: typeof AuthDashboardRoute
   AuthEditorRoute: typeof AuthEditorRoute
   AuthProfileRoute: typeof AuthProfileRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
+  AuthCreateProjectRoute: AuthCreateProjectRoute,
   AuthDashboardRoute: AuthDashboardRoute,
   AuthEditorRoute: AuthEditorRoute,
   AuthProfileRoute: AuthProfileRoute,
