@@ -1,6 +1,6 @@
 import { Canvas } from "@/components/canvas/Canvas";
-import { LeftSidebar } from "@/components/layout/LeftSidebar";
-import { RightPanel } from "@/components/layout/RightPanel";
+import { LeftSidebar } from "@/components/canvas/LeftSidebar";
+import { RightPanel } from "@/components/canvas/RightPanel";
 import { Topbar } from "@/components/layout/Topbar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
