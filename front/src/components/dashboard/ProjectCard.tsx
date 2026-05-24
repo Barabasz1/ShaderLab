@@ -6,26 +6,20 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuPortal,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  MoreHorizontal,
   MoreVertical,
   Pencil,
   PencilIcon,
-  Trash2,
   TrashIcon,
 } from "lucide-react";
-import { Moon, Sun } from "lucide-react";
 
 interface ProjectCardProps {
   id: string;
@@ -44,30 +38,41 @@ export function ProjectCard({
   lastModified,
   thumbnailGradient,
   onDelete,
-  onEdit,
 }: ProjectCardProps & {
   onDelete: (id: string) => void;
   onEdit: (id: string) => void;
 }) {
+  const navigate = useNavigate();
+
   return (
     <Card className="flex flex-col pt-0">
       <div
         className={`h-40 w-full bg-linear-to-br ${thumbnailGradient} relative`}
       >
         <DropdownMenu>
-          <DropdownMenuTrigger  className="absolute top-3 right-2 h-7 w-7">
+          <DropdownMenuTrigger className="absolute top-3 right-2 h-7 w-7">
             <Button variant="ghost" className="w-7 h-7">
               <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onEdit(id)}>
+            <DropdownMenuItem
+              onSelect={() =>
+                navigate({
+                  to: `/$projectId/editProject`,
+                  params: { projectId: id },
+                })
+              }
+            >
               <PencilIcon />
               Edit
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem variant="destructive" onClick={() => onDelete(id)}>
+            <DropdownMenuItem
+              variant="destructive"
+              onClick={() => onDelete(id)}
+            >
               <TrashIcon />
               Delete
             </DropdownMenuItem>
@@ -81,8 +86,8 @@ export function ProjectCard({
       </CardHeader>
       <CardFooter className="flex justify-between items-center border-t pt-6">
         <span className="text-sm text-muted-foreground">{lastModified}</span>
-        <Link to="/editor/$projectId" params={{ projectId: id }}>
-          <Button variant="default" >
+        <Link to="/$projectId/editor" params={{ projectId: id }}>
+          <Button variant="default">
             <Pencil className="mr-2 h-4 w-4" />
             Open Editor
           </Button>

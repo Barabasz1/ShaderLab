@@ -10,6 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 interface BackendProject {
   id: string;
   name: string;
+  description: string;
   createdAt: string;
   updatedAt: string;
   _count: {
@@ -119,7 +120,7 @@ export function Dashboard() {
               key={project.id}
               id={project.id}
               title={project.name}
-              description={`TODO`}
+              description={project.description}
               lastModified={new Date(project.updatedAt).toLocaleDateString()}
               thumbnailGradient={getGradientForId(project.id)}
               onDelete={setDeletingId}

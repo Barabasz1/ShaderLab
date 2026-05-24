@@ -1,4 +1,4 @@
-import { Canvas, syncUid } from "@/components/canvas/Canvas";
+import { Canvas } from "@/components/canvas/Canvas";
 import { LeftSidebar } from "@/components/canvas/LeftSidebar";
 import { RightPanel } from "@/components/canvas/RightPanel";
 import { Topbar } from "@/components/layout/Topbar";
@@ -11,65 +11,19 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  requestCompile,
-  saveGraphSnapshot,
-  setGraphState,
-  useGraphState,
-} from "@/components/state/graphState";
+import { requestCompile } from "@/components/state/graphState";
 import { Loader2, Play, Redo2, Save, Undo2 } from "lucide-react";
-import { useEffect, useState } from "react";
-import keycloak from "@/lib/keycloak";
-import { authFetch } from "@/lib/authFetch";
+import { useProjectLoader } from "@/hooks/useProjectLoader";
+import { useSaveProject } from "@/hooks/useSaveProject";
 
-export const Route = createFileRoute("/_auth/editor/$projectId")({
+export const Route = createFileRoute("/_auth/$projectId/editor")({
   component: RouteComponent,
 });
 
 function RouteComponent() {
   const { projectId } = Route.useParams();
-  const graph = useGraphState();
-  const [isSaving, setIsSaving] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const save = async () => {
-    if (!keycloak.authenticated) return;
-    setIsSaving(true);
-    try {
-      const res = await authFetch(
-        `/api/shaders/project/${projectId}/autosave`,
-        {
-          method: "PATCH",
-          body: JSON.stringify({
-            graph: { nodes: graph.nodes, edges: graph.edges },
-            code: graph.glslCode,
-          }),
-        },
-      );
-
-      if (!res.ok) throw new Error("Failed to save");
-    } catch (err) {
-      console.error("Failed to save:", err);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  useEffect(() => {
-    authFetch(`/api/shaders/project/${projectId}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to load");
-        return res.json();
-      })
-      .then((data) => {
-        const nodes = data.graph?.nodes ?? [];
-        const edges = data.graph?.edges ?? [];
-        syncUid(nodes, edges);
-        setGraphState({ nodes, edges, glslCode: data.code ?? "" });
-      })
-      .catch(console.error)
-      .finally(() => setIsLoading(false));
-  }, [projectId]);
+  const { isLoading } = useProjectLoader(projectId);
+  const { save, isSaving } = useSaveProject(projectId);
 
   return (
     <div className="h-svh flex flex-col overflow-hidden">
