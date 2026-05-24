@@ -1,24 +1,24 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Dashboard } from "@/components/dashboard/Dashboard";
+import { CommunityDashboard } from "@/components/dashboard/CommunityDashboard";
 import { Topbar } from "@/components/layout/Topbar";
+import { useCommunityProjects } from "@/hooks/useCommunityProjects";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { useProjects } from "@/hooks/useProjects";
 
-export const Route = createFileRoute("/_auth/dashboard")({
+export const Route = createFileRoute("/community")({
   component: RouteComponent,
 });
 
 function RouteComponent() {
   const [page, setPage] = useState(1);
-  const { data, isLoading, error } = useProjects(page);
+  const { data, isLoading, error } = useCommunityProjects(page);
 
   return (
     <div className="flex flex-col h-screen w-full overflow-hidden">
       <Topbar />
       <div className="flex flex-1 overflow-hidden">
-        <Dashboard
-          title="My Shaders"
-          subtitle="Manage and edit your creative coding projects."
+        <CommunityDashboard
+          title="Community Shaders"
+          subtitle="Discover shaders made by others."
           data={data}
           isLoading={isLoading}
           error={error}

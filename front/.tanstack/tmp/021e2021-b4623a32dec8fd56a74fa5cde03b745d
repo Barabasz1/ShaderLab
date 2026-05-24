@@ -9,21 +9,14 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as CommunityRouteImport } from './routes/community'
 import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthProfileRouteImport } from './routes/_auth/profile'
 import { Route as AuthDashboardRouteImport } from './routes/_auth/dashboard'
 import { Route as AuthCreateProjectRouteImport } from './routes/_auth/createProject'
-import { Route as ProjectIdViewerRouteImport } from './routes/$projectId.viewer'
-import { Route as AuthProjectIdEditorRouteImport } from './routes/_auth/$projectId.editor'
-import { Route as AuthProjectIdEditProjectRouteImport } from './routes/_auth/$projectId.editProject'
+import { Route as AuthEditorProjectIdRouteImport } from './routes/_auth/editor.$projectId'
+import { Route as AuthEditProjectProjectIdRouteImport } from './routes/_auth/editProject.$projectId'
 
-const CommunityRoute = CommunityRouteImport.update({
-  id: '/community',
-  path: '/community',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/_auth',
   getParentRoute: () => rootRouteImport,
@@ -48,105 +41,79 @@ const AuthCreateProjectRoute = AuthCreateProjectRouteImport.update({
   path: '/createProject',
   getParentRoute: () => AuthRoute,
 } as any)
-const ProjectIdViewerRoute = ProjectIdViewerRouteImport.update({
-  id: '/$projectId/viewer',
-  path: '/$projectId/viewer',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthProjectIdEditorRoute = AuthProjectIdEditorRouteImport.update({
-  id: '/$projectId/editor',
-  path: '/$projectId/editor',
+const AuthEditorProjectIdRoute = AuthEditorProjectIdRouteImport.update({
+  id: '/editor/$projectId',
+  path: '/editor/$projectId',
   getParentRoute: () => AuthRoute,
 } as any)
-const AuthProjectIdEditProjectRoute =
-  AuthProjectIdEditProjectRouteImport.update({
-    id: '/$projectId/editProject',
-    path: '/$projectId/editProject',
+const AuthEditProjectProjectIdRoute =
+  AuthEditProjectProjectIdRouteImport.update({
+    id: '/editProject/$projectId',
+    path: '/editProject/$projectId',
     getParentRoute: () => AuthRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/community': typeof CommunityRoute
-  '/$projectId/viewer': typeof ProjectIdViewerRoute
   '/createProject': typeof AuthCreateProjectRoute
   '/dashboard': typeof AuthDashboardRoute
   '/profile': typeof AuthProfileRoute
-  '/$projectId/editProject': typeof AuthProjectIdEditProjectRoute
-  '/$projectId/editor': typeof AuthProjectIdEditorRoute
+  '/editProject/$projectId': typeof AuthEditProjectProjectIdRoute
+  '/editor/$projectId': typeof AuthEditorProjectIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/community': typeof CommunityRoute
-  '/$projectId/viewer': typeof ProjectIdViewerRoute
   '/createProject': typeof AuthCreateProjectRoute
   '/dashboard': typeof AuthDashboardRoute
   '/profile': typeof AuthProfileRoute
-  '/$projectId/editProject': typeof AuthProjectIdEditProjectRoute
-  '/$projectId/editor': typeof AuthProjectIdEditorRoute
+  '/editProject/$projectId': typeof AuthEditProjectProjectIdRoute
+  '/editor/$projectId': typeof AuthEditorProjectIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_auth': typeof AuthRouteWithChildren
-  '/community': typeof CommunityRoute
-  '/$projectId/viewer': typeof ProjectIdViewerRoute
   '/_auth/createProject': typeof AuthCreateProjectRoute
   '/_auth/dashboard': typeof AuthDashboardRoute
   '/_auth/profile': typeof AuthProfileRoute
-  '/_auth/$projectId/editProject': typeof AuthProjectIdEditProjectRoute
-  '/_auth/$projectId/editor': typeof AuthProjectIdEditorRoute
+  '/_auth/editProject/$projectId': typeof AuthEditProjectProjectIdRoute
+  '/_auth/editor/$projectId': typeof AuthEditorProjectIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/community'
-    | '/$projectId/viewer'
     | '/createProject'
     | '/dashboard'
     | '/profile'
-    | '/$projectId/editProject'
-    | '/$projectId/editor'
+    | '/editProject/$projectId'
+    | '/editor/$projectId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/community'
-    | '/$projectId/viewer'
     | '/createProject'
     | '/dashboard'
     | '/profile'
-    | '/$projectId/editProject'
-    | '/$projectId/editor'
+    | '/editProject/$projectId'
+    | '/editor/$projectId'
   id:
     | '__root__'
     | '/'
     | '/_auth'
-    | '/community'
-    | '/$projectId/viewer'
     | '/_auth/createProject'
     | '/_auth/dashboard'
     | '/_auth/profile'
-    | '/_auth/$projectId/editProject'
-    | '/_auth/$projectId/editor'
+    | '/_auth/editProject/$projectId'
+    | '/_auth/editor/$projectId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRouteWithChildren
-  CommunityRoute: typeof CommunityRoute
-  ProjectIdViewerRoute: typeof ProjectIdViewerRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/community': {
-      id: '/community'
-      path: '/community'
-      fullPath: '/community'
-      preLoaderRoute: typeof CommunityRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_auth': {
       id: '/_auth'
       path: ''
@@ -182,25 +149,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCreateProjectRouteImport
       parentRoute: typeof AuthRoute
     }
-    '/$projectId/viewer': {
-      id: '/$projectId/viewer'
-      path: '/$projectId/viewer'
-      fullPath: '/$projectId/viewer'
-      preLoaderRoute: typeof ProjectIdViewerRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_auth/$projectId/editor': {
-      id: '/_auth/$projectId/editor'
-      path: '/$projectId/editor'
-      fullPath: '/$projectId/editor'
-      preLoaderRoute: typeof AuthProjectIdEditorRouteImport
+    '/_auth/editor/$projectId': {
+      id: '/_auth/editor/$projectId'
+      path: '/editor/$projectId'
+      fullPath: '/editor/$projectId'
+      preLoaderRoute: typeof AuthEditorProjectIdRouteImport
       parentRoute: typeof AuthRoute
     }
-    '/_auth/$projectId/editProject': {
-      id: '/_auth/$projectId/editProject'
-      path: '/$projectId/editProject'
-      fullPath: '/$projectId/editProject'
-      preLoaderRoute: typeof AuthProjectIdEditProjectRouteImport
+    '/_auth/editProject/$projectId': {
+      id: '/_auth/editProject/$projectId'
+      path: '/editProject/$projectId'
+      fullPath: '/editProject/$projectId'
+      preLoaderRoute: typeof AuthEditProjectProjectIdRouteImport
       parentRoute: typeof AuthRoute
     }
   }
@@ -210,16 +170,16 @@ interface AuthRouteChildren {
   AuthCreateProjectRoute: typeof AuthCreateProjectRoute
   AuthDashboardRoute: typeof AuthDashboardRoute
   AuthProfileRoute: typeof AuthProfileRoute
-  AuthProjectIdEditProjectRoute: typeof AuthProjectIdEditProjectRoute
-  AuthProjectIdEditorRoute: typeof AuthProjectIdEditorRoute
+  AuthEditProjectProjectIdRoute: typeof AuthEditProjectProjectIdRoute
+  AuthEditorProjectIdRoute: typeof AuthEditorProjectIdRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
   AuthCreateProjectRoute: AuthCreateProjectRoute,
   AuthDashboardRoute: AuthDashboardRoute,
   AuthProfileRoute: AuthProfileRoute,
-  AuthProjectIdEditProjectRoute: AuthProjectIdEditProjectRoute,
-  AuthProjectIdEditorRoute: AuthProjectIdEditorRoute,
+  AuthEditProjectProjectIdRoute: AuthEditProjectProjectIdRoute,
+  AuthEditorProjectIdRoute: AuthEditorProjectIdRoute,
 }
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
@@ -227,8 +187,6 @@ const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRouteWithChildren,
-  CommunityRoute: CommunityRoute,
-  ProjectIdViewerRoute: ProjectIdViewerRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -12,7 +12,7 @@ export function Topbar({ children }: TopbarProps) {
   const navLinkClass = buttonVariants({
     variant: "ghost",
     size: "sm",
-    className: "h-7 px-2 text-xs"
+    className: "h-7 px-2 text-xs",
   });
 
   return (
@@ -26,6 +26,9 @@ export function Topbar({ children }: TopbarProps) {
 
       <Link to="/dashboard" className={navLinkClass}>
         Dashboard
+      </Link>
+      <Link to="/community" className={navLinkClass}>
+        Community
       </Link>
       <Link to="/profile" className={navLinkClass}>
         Profile

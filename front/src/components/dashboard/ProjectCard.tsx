@@ -14,12 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  MoreVertical,
-  Pencil,
-  PencilIcon,
-  TrashIcon,
-} from "lucide-react";
+import { Eye, MoreVertical, Pencil, PencilIcon, TrashIcon } from "lucide-react";
 
 interface ProjectCardProps {
   id: string;
@@ -29,6 +24,7 @@ interface ProjectCardProps {
   thumbnailGradient: string;
   onDelete: (id: string) => void;
   onEdit: (id: string) => void;
+  allowEdit?: boolean;
 }
 
 export function ProjectCard({
@@ -38,6 +34,7 @@ export function ProjectCard({
   lastModified,
   thumbnailGradient,
   onDelete,
+  allowEdit,
 }: ProjectCardProps & {
   onDelete: (id: string) => void;
   onEdit: (id: string) => void;
@@ -49,49 +46,62 @@ export function ProjectCard({
       <div
         className={`h-40 w-full bg-linear-to-br ${thumbnailGradient} relative`}
       >
-        <DropdownMenu>
-          <DropdownMenuTrigger className="absolute top-3 right-2 h-7 w-7">
-            <Button variant="ghost" className="w-7 h-7">
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
+        {allowEdit && (
+          <DropdownMenu>
+            <DropdownMenuTrigger className="absolute top-3 right-2 h-7 w-7">
+              <Button variant="ghost" className="w-7 h-7">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
 
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onSelect={() =>
-                navigate({
-                  to: `/$projectId/editProject`,
-                  params: { projectId: id },
-                })
-              }
-            >
-              <PencilIcon />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              variant="destructive"
-              onClick={() => onDelete(id)}
-            >
-              <TrashIcon />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onSelect={() =>
+                  navigate({
+                    to: `/$projectId/editProject`,
+                    params: { projectId: id },
+                  })
+                }
+              >
+                <PencilIcon />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={() => onDelete(id)}
+              >
+                <TrashIcon />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
 
       <CardHeader className="relative">
         <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
+        <CardDescription className="min-h-5">
+          {description || ""}
+        </CardDescription>
       </CardHeader>
       <CardFooter className="flex justify-between items-center border-t pt-6">
         <span className="text-sm text-muted-foreground">{lastModified}</span>
-        <Link to="/$projectId/editor" params={{ projectId: id }}>
-          <Button variant="default">
-            <Pencil className="mr-2 h-4 w-4" />
-            Open Editor
-          </Button>
-        </Link>
+        {allowEdit ? (
+          <Link to="/$projectId/editor" params={{ projectId: id }}>
+            <Button variant="default">
+              <PencilIcon className="mr-2 h-4 w-4" />
+              Open Editor
+            </Button>
+          </Link>
+        ) : (
+          <Link to="/$projectId/viewer" params={{ projectId: id }}>
+            <Button variant="default">
+              <Eye className="mr-2 h-4 w-4" />
+              View
+            </Button>
+          </Link>
+        )}
       </CardFooter>
     </Card>
   );

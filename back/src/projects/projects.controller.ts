@@ -8,6 +8,7 @@ import {
   Delete,
   ForbiddenException,
   Patch,
+  Query,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { AuthenticatedUser, Unprotected } from 'nest-keycloak-connect';
@@ -44,6 +45,28 @@ export class ProjectsController {
     });
   }
 
+  @Get('community')
+  async getCommunityProjects(
+    @Query('page') page = '1',
+    @Query('pageSize') pageSize = '9',
+  ) {
+    const skip = (parseInt(page) - 1) * parseInt(pageSize);
+    const take = parseInt(pageSize);
+
+    const [projects, total] = await Promise.all([
+      this.prisma.project.findMany({
+        where: { isPublic: true },
+        skip,
+        take,
+        orderBy: { updatedAt: 'desc' },
+        include: { _count: { select: { shaders: true } } },
+      }),
+      this.prisma.project.count({ where: { isPublic: true } }),
+    ]);
+
+    return { projects, total };
+  }
+
   @Get(':id')
   async getProjectById(@Param('id') id: string) {
     const project = await this.prisma.project.findUnique({
@@ -59,16 +82,26 @@ export class ProjectsController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all projects for the authenticated user' })
-  async getUserProjects(@AuthenticatedUser() user: any) {
-    return this.prisma.project.findMany({
-      where: { ownerId: user.sub },
-      include: {
-        _count: {
-          select: { shaders: true },
-        },
-      },
-    });
+  async getUserProjects(
+    @AuthenticatedUser() user: any,
+    @Query('page') page = '1',
+    @Query('pageSize') pageSize = '9',
+  ) {
+    const skip = (parseInt(page) - 1) * parseInt(pageSize);
+    const take = parseInt(pageSize);
+
+    const [projects, total] = await Promise.all([
+      this.prisma.project.findMany({
+        where: { ownerId: user.sub },
+        skip,
+        take,
+        orderBy: { updatedAt: 'desc' },
+        include: { _count: { select: { shaders: true } } },
+      }),
+      this.prisma.project.count({ where: { ownerId: user.sub } }),
+    ]);
+
+    return { projects, total };
   }
 
   @Delete(':id')
@@ -82,10 +115,10 @@ export class ProjectsController {
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update project name and description' })
+  @ApiOperation({ summary: 'Update project name, description and visibility' })
   async updateProject(
     @Param('id') id: string,
-    @Body() data: { name?: string; description?: string },
+    @Body() data: { name?: string; description?: string; isPublic?: boolean },
     @AuthenticatedUser() user: any,
   ) {
     const project = await this.prisma.project.findUnique({ where: { id } });
@@ -100,6 +133,7 @@ export class ProjectsController {
         ...(data.description !== undefined && {
           description: data.description,
         }),
+        ...(data.isPublic !== undefined && { isPublic: data.isPublic }),
       },
     });
   }
