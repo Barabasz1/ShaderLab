@@ -1,4 +1,10 @@
-import { useState, useRef, useCallback, useEffect, useLayoutEffect } from "react";
+import {
+  useState,
+  useRef,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+} from "react";
 import { Button } from "@/components/ui/button";
 import { NodeCard } from "./NodeCard";
 import { canConnectPortTypes, nodeDefs } from "@/nodes/nodeDefs";
@@ -12,24 +18,19 @@ import {
 } from "@/components/state/graphState";
 import { Badge } from "../ui/badge";
 import { Maximize2, Minus, Plus } from "lucide-react";
-
-let uid = 100;
-const makeId = () => String(++uid);
-
-export const syncUid = (nodes: UiNode[], edges: UiEdge[]) => {
-  let ids = [...nodes, ...edges].map((x) => parseInt(x.id)).filter(isFinite);
-
-  if (ids.length === 0) return;
-
-  uid = Math.max(uid, ...ids);
-};
+import { useCanvasPan } from "./hooks/useCanvasPan";
+import { useEdgeConnect } from "./hooks/useEdgeConnect";
+import { anchorCenter } from "./utils/anchorCenter";
+import { makeId } from "./utils/makeId";
+import { getNodeDef } from "@/nodes/getNodeDef";
+import { useNodeDrag } from "./hooks/useNodeDrag";
+import { useNodeChange } from "./hooks/useNodeChange";
+import { useKeyboardDelete } from "./hooks/useKeyboardDelete";
 
 function cubicBez(x1: number, y1: number, x2: number, y2: number) {
   const cx = (x1 + x2) / 2;
   return `M${x1},${y1} C${cx},${y1} ${cx},${y2} ${x2},${y2}`;
 }
-
-const getNodeDef = (type: string) => nodeDefs[type];
 
 const getControlValues = (type: string) => {
   const def = nodeDefs[type];
@@ -44,17 +45,39 @@ const getControlValues = (type: string) => {
   return values;
 };
 
-export function Canvas() {
+interface CanvasProps {
+  readOnly: boolean;
+}
+
+export function Canvas({ readOnly = false }: CanvasProps) {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const anchorRefs = useRef<Record<string, HTMLDivElement>>({});
+
   const { nodes, edges } = useGraphState();
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [selectedEdge, setSelectedEdge] = useState<string | null>(null);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [connecting, setConnecting] = useState<any>(null);
-  const [mouse, setMouse] = useState({ x: 0, y: 0 });
-
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const anchorRefs = useRef<Record<string, HTMLDivElement>>({});
+  const { pan, zoom, setZoom, setPan, onCanvasDown, onWheel } = useCanvasPan(
+    wrapRef,
+    setSelectedNode,
+    setSelectedEdge,
+  );
+  const { connecting, mouse, onAnchorDown, onAnchorUp } = useEdgeConnect(
+    wrapRef,
+    anchorRefs,
+  );
+  const { onNodeDown, onNodeHeaderDown } = useNodeDrag(
+    zoom,
+    setSelectedNode,
+    setSelectedEdge,
+  );
+  const { onControlChange, onInlineValueChange } = useNodeChange();
+  useKeyboardDelete(
+    selectedNode,
+    selectedEdge,
+    setSelectedNode,
+    setSelectedEdge,
+    readOnly,
+  );
 
   const [, forceUpdate] = useState({});
 
@@ -74,100 +97,6 @@ export function Canvas() {
     x: (sx - pan.x) / zoom,
     y: (sy - pan.y) / zoom,
   });
-
-  const anchorCenter = (nodeId: string, side: string, port: string) => {
-    const key = `${nodeId}:${side}:${port}`;
-    const el = anchorRefs.current[key];
-    const wrap = wrapRef.current;
-    if (!el || !wrap) return null;
-    const er = el.getBoundingClientRect();
-    const wr = wrap.getBoundingClientRect();
-    return {
-      x: er.left + er.width / 2 - wr.left,
-      y: er.top + er.height / 2 - wr.top,
-    };
-  };
-
-  const onNodeDown = (e: React.MouseEvent, id: string) => {
-    if (e.button !== 0) return;
-    e.stopPropagation();
-    setSelectedNode(id);
-    setSelectedEdge(null);
-  };
-
-  const onNodeHeaderDown = (e: React.MouseEvent, id: string) => {
-    if (e.button !== 0) return;
-    e.stopPropagation();
-    setSelectedNode(id);
-    setSelectedEdge(null);
-
-    const node = getGraphState().nodes.find((n) => n.id === id)!;
-    const ox = node.x,
-      oy = node.y;
-    const sx = e.clientX,
-      sy = e.clientY;
-
-    const move = (ev: MouseEvent) => {
-      const dx = (ev.clientX - sx) / zoom,
-        dy = (ev.clientY - sy) / zoom;
-      setGraphState({
-        nodes: getGraphState().nodes.map((n) =>
-          n.id === id ? { ...n, x: ox + dx, y: oy + dy } : n,
-        ),
-      });
-    };
-
-    const up = () => {
-      window.removeEventListener("mousemove", move);
-      window.removeEventListener("mouseup", up);
-    };
-
-    window.addEventListener("mousemove", move);
-    window.addEventListener("mouseup", up);
-  };
-
-  const onCanvasDown = (e: React.MouseEvent) => {
-    if (
-      e.target !== wrapRef.current &&
-      (e.target as Element).id !== "edges-svg" &&
-      !(e.target as Element).closest(".absolute")
-    ) {
-      setSelectedNode(null);
-      setSelectedEdge(null);
-      return;
-    }
-    if (e.button !== 0) return;
-    setSelectedNode(null);
-    setSelectedEdge(null);
-
-    const sx = e.clientX - pan.x,
-      sy = e.clientY - pan.y;
-    const move = (ev: MouseEvent) =>
-      setPan({ x: ev.clientX - sx, y: ev.clientY - sy });
-    const up = () => {
-      window.removeEventListener("mousemove", move);
-      window.removeEventListener("mouseup", up);
-    };
-
-    window.addEventListener("mousemove", move);
-    window.addEventListener("mouseup", up);
-  };
-
-  const onWheel = (e: React.WheelEvent) => {
-    const f = e.deltaY < 0 ? 1.1 : 0.91;
-    const rect = wrapRef.current!.getBoundingClientRect();
-    const mx = e.clientX - rect.left,
-      my = e.clientY - rect.top;
-
-    setZoom((z) => {
-      const nz = Math.min(3, Math.max(0.15, z * f));
-      setPan((p) => ({
-        x: mx - (mx - p.x) * (nz / z),
-        y: my - (my - p.y) * (nz / z),
-      }));
-      return nz;
-    });
-  };
 
   const onDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -196,164 +125,9 @@ export function Canvas() {
     });
   };
 
-  const onAnchorDown = (
-    e: React.MouseEvent,
-    nodeId: string,
-    port: string,
-    side: string,
-  ) => {
-    e.stopPropagation();
-    e.preventDefault();
-    const c = anchorCenter(nodeId, side, port);
-    if (!c) return;
-    setConnecting({ nodeId, port, side, ax: c.x, ay: c.y });
-    const wr = wrapRef.current!.getBoundingClientRect();
-    setMouse({ x: e.clientX - wr.left, y: e.clientY - wr.top });
-
-    const move = (ev: MouseEvent) => {
-      const r = wrapRef.current!.getBoundingClientRect();
-      setMouse({ x: ev.clientX - r.left, y: ev.clientY - r.top });
-    };
-    const up = () => {
-      setConnecting(null);
-      window.removeEventListener("mousemove", move);
-      window.removeEventListener("mouseup", up);
-    };
-    window.addEventListener("mousemove", move);
-    window.addEventListener("mouseup", up);
-  };
-
-  const getPortType = (nodeId: string, side: string, port: string) => {
-    const node = getGraphState().nodes.find((n) => n.id === nodeId);
-    const def = node ? getNodeDef(node.type) : null;
-    const ports = side === "out" ? def?.outputs : def?.inputs;
-    return ports?.find((p) => p.id === port)?.type ?? null;
-  };
-
-  const onAnchorUp = (
-    e: React.MouseEvent,
-    nodeId: string,
-    port: string,
-    side: string,
-  ) => {
-    if (!connecting || connecting.nodeId === nodeId) return;
-    let src, tgt;
-    if (connecting.side === "out" && side === "in") {
-      src = { nodeId: connecting.nodeId, port: connecting.port };
-      tgt = { nodeId, port };
-    } else if (connecting.side === "in" && side === "out") {
-      src = { nodeId, port };
-      tgt = { nodeId: connecting.nodeId, port: connecting.port };
-    } else return;
-
-    const sourceType = getPortType(src.nodeId, "out", src.port);
-    const targetType = getPortType(tgt.nodeId, "in", tgt.port);
-    if (
-      sourceType &&
-      targetType &&
-      !canConnectPortTypes(sourceType, targetType)
-    )
-      return;
-
-    setGraphState({
-      edges: [
-        ...edges.filter(
-          (edge) => !(edge.tgt === tgt.nodeId && edge.tgtPort === tgt.port),
-        ),
-        {
-          id: makeId(),
-          src: src.nodeId,
-          srcPort: src.port,
-          tgt: tgt.nodeId,
-          tgtPort: tgt.port,
-        },
-      ],
-    });
-  };
-
-  const onControlChange = useCallback(
-    (nodeId: string, controlId: string, value: ControlValue) => {
-      setGraphState({
-        nodes: getGraphState().nodes.map((node) =>
-          node.id === nodeId
-            ? {
-                ...node,
-                controlValues: {
-                  ...(node.controlValues ?? {}),
-                  [controlId]: value,
-                },
-              }
-            : node,
-        ),
-      });
-    },
-    [],
-  );
-
-  const onInlineValueChange = useCallback(
-    (nodeId: string, inputId: string, value: ControlValue) => {
-      setGraphState({
-        nodes: getGraphState().nodes.map((node) =>
-          node.id === nodeId
-            ? {
-                ...node,
-                inlineValues: {
-                  ...(node.inlineValues ?? {}),
-                  [inputId]: value,
-                },
-              }
-            : node,
-        ),
-      });
-    },
-    [],
-  );
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement | null;
-      const editing =
-        target instanceof HTMLInputElement ||
-        target instanceof HTMLTextAreaElement ||
-        target?.isContentEditable;
-
-      if (editing || (e.key !== "Delete" && e.key !== "Backspace")) return;
-
-      if (selectedNode) {
-        const node = getGraphState().nodes.find((n) => n.id === selectedNode);
-        if (node && getNodeDef(node.type)?.deletable === false) return;
-
-        e.preventDefault();
-        setGraphState({
-          nodes: getGraphState().nodes.filter(
-            (node) => node.id !== selectedNode,
-          ),
-        });
-        setGraphState({
-          edges: edges.filter(
-            (edge) => edge.src !== selectedNode && edge.tgt !== selectedNode,
-          ),
-        });
-        setSelectedNode(null);
-        return;
-      }
-
-      if (selectedEdge) {
-        e.preventDefault();
-        setGraphState({
-          edges: edges.filter((edge) => edge.id !== selectedEdge),
-        });
-        setSelectedEdge(null);
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [nodes, selectedNode, selectedEdge]);
-
   const edgePoints = (edge: any) => {
-    const sp = anchorCenter(edge.src, "out", edge.srcPort);
-    const tp = anchorCenter(edge.tgt, "in", edge.tgtPort);
+    const sp = anchorCenter(edge.src, "out", edge.srcPort, anchorRefs, wrapRef);
+    const tp = anchorCenter(edge.tgt, "in", edge.tgtPort, anchorRefs, wrapRef);
     return { sp, tp };
   };
 

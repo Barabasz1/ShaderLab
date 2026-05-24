@@ -1,4 +1,4 @@
-import { syncUid } from "@/components/canvas/Canvas";
+import { syncUid } from "@/components/canvas/utils/makeId";
 import { setGraphState } from "@/components/state/graphState";
 import { authFetch } from "@/lib/authFetch";
 import { useEffect, useState } from "react";
