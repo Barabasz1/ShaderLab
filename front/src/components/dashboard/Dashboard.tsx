@@ -47,6 +47,8 @@ export interface DashboardProps {
   page: number;
   pageSize: number;
   onPageChange: (page: number) => void;
+  search: string,
+  onSearchChange: (search: string) => void;
 }
 
 export function Dashboard({
@@ -58,7 +60,7 @@ export function Dashboard({
   page,
   pageSize,
   onPageChange,
-}: DashboardProps) {
+  }: DashboardProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const projects = data?.projects ?? [];

@@ -1,9 +1,10 @@
 import { ControlValue, getGraphState, setGraphState } from "@/components/state/graphState";
 import { useCallback } from "react";
 
-export function useNodeChange() {
+export function useNodeChange(readOnly: boolean) {
   const onControlChange = useCallback(
     (nodeId: string, controlId: string, value: ControlValue) => {
+      if (readOnly) return;
       setGraphState({
         nodes: getGraphState().nodes.map((node) =>
           node.id === nodeId
@@ -23,6 +24,7 @@ export function useNodeChange() {
 
   const onInlineValueChange = useCallback(
     (nodeId: string, inputId: string, value: ControlValue) => {
+      if (readOnly) return;
       setGraphState({
         nodes: getGraphState().nodes.map((node) =>
           node.id === nodeId

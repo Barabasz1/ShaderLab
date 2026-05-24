@@ -7,12 +7,10 @@ import {
 } from "react";
 import { Button } from "@/components/ui/button";
 import { NodeCard } from "./NodeCard";
-import { canConnectPortTypes, nodeDefs } from "@/nodes/nodeDefs";
+import { nodeDefs } from "@/nodes/nodeDefs";
 import {
   getGraphState,
   setGraphState,
-  UiEdge,
-  UiNode,
   useGraphState,
   type ControlValue,
 } from "@/components/state/graphState";
@@ -22,7 +20,6 @@ import { useCanvasPan } from "./hooks/useCanvasPan";
 import { useEdgeConnect } from "./hooks/useEdgeConnect";
 import { anchorCenter } from "./utils/anchorCenter";
 import { makeId } from "./utils/makeId";
-import { getNodeDef } from "@/nodes/getNodeDef";
 import { useNodeDrag } from "./hooks/useNodeDrag";
 import { useNodeChange } from "./hooks/useNodeChange";
 import { useKeyboardDelete } from "./hooks/useKeyboardDelete";
@@ -64,13 +61,15 @@ export function Canvas({ readOnly = false }: CanvasProps) {
   const { connecting, mouse, onAnchorDown, onAnchorUp } = useEdgeConnect(
     wrapRef,
     anchorRefs,
+    readOnly,
   );
   const { onNodeDown, onNodeHeaderDown } = useNodeDrag(
     zoom,
     setSelectedNode,
     setSelectedEdge,
+    readOnly,
   );
-  const { onControlChange, onInlineValueChange } = useNodeChange();
+  const { onControlChange, onInlineValueChange } = useNodeChange(readOnly);
   useKeyboardDelete(
     selectedNode,
     selectedEdge,
@@ -223,6 +222,7 @@ export function Canvas({ readOnly = false }: CanvasProps) {
               onInlineValueChange={onInlineValueChange}
               anchorRefs={anchorRefs}
               connectedPorts={connectedPortsMap[node.id]}
+              readOnly={readOnly}
             />
           </div>
         ))}

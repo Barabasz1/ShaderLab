@@ -4,16 +4,17 @@ export function useNodeDrag(
   zoom: number,
   setSelectedNode: (id: string | null) => void,
   setSelectedEdge: (id: string | null) => void,
+  readOnly: boolean,
 ) {
   const onNodeDown = (e: React.MouseEvent, id: string) => {
-    if (e.button !== 0) return;
+    if (e.button !== 0 || readOnly) return;
     e.stopPropagation();
     setSelectedNode(id);
     setSelectedEdge(null);
   };
 
   const onNodeHeaderDown = (e: React.MouseEvent, id: string) => {
-    if (e.button !== 0) return;
+    if (e.button !== 0 || readOnly) return;
     e.stopPropagation();
     setSelectedNode(id);
     setSelectedEdge(null);

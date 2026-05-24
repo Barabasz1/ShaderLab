@@ -10,7 +10,8 @@ export const Route = createFileRoute("/community")({
 
 function RouteComponent() {
   const [page, setPage] = useState(1);
-  const { data, isLoading, error } = useCommunityProjects(page);
+  const [search, setSearch] = useState("");
+  const { data, isLoading, error } = useCommunityProjects(page, 9, search);
 
   return (
     <div className="flex flex-col h-screen w-full overflow-hidden">
@@ -25,6 +26,8 @@ function RouteComponent() {
           page={page}
           pageSize={9}
           onPageChange={setPage}
+          search={search}
+          onSearchChange={setSearch}
         />
       </div>
     </div>

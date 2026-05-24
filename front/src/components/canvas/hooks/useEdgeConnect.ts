@@ -15,6 +15,7 @@ const getPortType = (nodeId: string, side: string, port: string) => {
 export function useEdgeConnect(
   wrapRef: React.RefObject<HTMLDivElement>,
   anchorRefs: React.RefObject<Record<string, HTMLDivElement>>,
+  readOnly: boolean,
 ) {
   const [connecting, setConnecting] = useState<any>(null);
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
@@ -25,6 +26,8 @@ export function useEdgeConnect(
     port: string,
     side: string,
   ) => {
+    if (readOnly) return;
+    
     e.stopPropagation();
     e.preventDefault();
 
@@ -55,6 +58,8 @@ export function useEdgeConnect(
     port: string,
     side: string,
   ) => {
+    if (readOnly) return;
+
     if (!connecting || connecting.nodeId === nodeId) return;
     let src, tgt;
     if (connecting.side === "out" && side === "in") {
@@ -90,5 +95,12 @@ export function useEdgeConnect(
     });
   };
 
-  return { connecting, setConnecting, mouse, setMouse, onAnchorDown, onAnchorUp };
+  return {
+    connecting,
+    setConnecting,
+    mouse,
+    setMouse,
+    onAnchorDown,
+    onAnchorUp,
+  };
 }

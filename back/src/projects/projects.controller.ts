@@ -13,6 +13,7 @@ import {
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { AuthenticatedUser, Unprotected } from 'nest-keycloak-connect';
 import { PrismaService } from '../prisma/prisma.service';
+import { Prisma } from '@prisma/client/extension';
 
 @ApiTags('Projects')
 @ApiBearerAuth()
@@ -49,19 +50,26 @@ export class ProjectsController {
   async getCommunityProjects(
     @Query('page') page = '1',
     @Query('pageSize') pageSize = '9',
+    @Query('search') search = '',
   ) {
     const skip = (parseInt(page) - 1) * parseInt(pageSize);
     const take = parseInt(pageSize);
+    const where = {
+      isPublic: true,
+      ...(search && {
+        name: { contains: search, mode: 'insensitive' as const },
+      }),
+    };
 
     const [projects, total] = await Promise.all([
       this.prisma.project.findMany({
-        where: { isPublic: true },
+        where,
         skip,
         take,
         orderBy: { updatedAt: 'desc' },
         include: { _count: { select: { shaders: true } } },
       }),
-      this.prisma.project.count({ where: { isPublic: true } }),
+      this.prisma.project.count({ where }),
     ]);
 
     return { projects, total };

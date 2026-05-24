@@ -12,9 +12,8 @@ import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { createFileRoute } from "@tanstack/react-router";
 import { requestCompile } from "@/components/state/graphState";
-import { Loader2, Play, Redo2, Save, Undo2 } from "lucide-react";
+import { Loader2, Play } from "lucide-react";
 import { useProjectLoader } from "@/hooks/useProjectLoader";
-import { useSaveProject } from "@/hooks/useSaveProject";
 
 export const Route = createFileRoute("/$projectId/viewer")({
   component: RouteComponent,
@@ -39,7 +38,6 @@ function RouteComponent() {
       </Topbar>
 
       <SidebarProvider className="min-h-0 w-full h-[calc(100svh-2.75rem)]!">
-        <LeftSidebar />
         <SidebarInset className="flex flex-col min-h-0 overflow-hidden">
           <ResizablePanelGroup
             orientation="horizontal"
@@ -51,11 +49,11 @@ function RouteComponent() {
                   <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
                 </div>
               ) : (
-                <Canvas />
+                <Canvas readOnly={true} />
               )}
             </ResizablePanel>
             <ResizableHandle />
-            <ResizablePanel defaultSize={"20%"} minSize={"15%"} maxSize={"30%"}>
+            <ResizablePanel defaultSize={"25%"} minSize={"15%"} maxSize={"40%"}>
               <RightPanel />
             </ResizablePanel>
           </ResizablePanelGroup>
