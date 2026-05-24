@@ -12,7 +12,7 @@ export function Topbar({ children }: TopbarProps) {
   const navLinkClass = buttonVariants({
     variant: "ghost",
     size: "sm",
-    className: "h-7 px-2 text-xs"
+    className: "h-7 px-2 text-xs",
   });
 
   return (
@@ -27,13 +27,16 @@ export function Topbar({ children }: TopbarProps) {
       <Link to="/dashboard" className={navLinkClass}>
         Dashboard
       </Link>
+      <Link to="/community" className={navLinkClass}>
+        Community
+      </Link>
       <Link to="/profile" className={navLinkClass}>
         Profile
       </Link>
 
       <Separator orientation="vertical" className="h-6" />
 
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ml-auto h-full flex items-center gap-2">
         {children}
 
         <ThemeToggle />

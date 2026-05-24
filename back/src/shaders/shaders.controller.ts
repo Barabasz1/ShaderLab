@@ -1,4 +1,12 @@
-import { Controller, Get, Patch, Param, Body, UnauthorizedException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Patch,
+  Param,
+  Body,
+  UnauthorizedException,
+  NotFoundException,
+} from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { AuthenticatedUser } from 'nest-keycloak-connect';
 import { PrismaService } from '../prisma/prisma.service';
@@ -9,22 +17,42 @@ import { PrismaService } from '../prisma/prisma.service';
 export class ShadersController {
   constructor(private prisma: PrismaService) {}
 
-  @Get(':id')
-  async getShader(@Param('id') id: string) {
-    // Note: You should add permission logic here to ensure the user 
-    // is either the owner or a collaborator on the project this shader belongs to.
-    return this.prisma.shader.findUnique({ where: { id } });
+  private async getShaderForProject(projectId: string, userId: string) {
+    const link = await this.prisma.projectShader.findFirst({
+      where: {
+        projectId,
+        project: {
+          OR: [
+            { ownerId: userId },
+            { collaborators: { some: { userId } } },
+          ],
+        },
+      },
+      include: { shader: true },
+    });
+    if (!link) throw new NotFoundException('Shader not found');
+    return link.shader;
   }
 
-  @Patch(':id/autosave')
-  @ApiOperation({ summary: 'Autosave an independent shader graph' })
-  async autosave(
-    @Param('id') id: string,
-    @Body() data: { graph: any, code: string }
+  @Get('project/:projectId')
+  async getShader(
+    @AuthenticatedUser() user: any,
+    @Param('projectId') projectId: string,
   ) {
+    return this.getShaderForProject(projectId, user.sub);
+  }
+
+  @Patch('project/:projectId/autosave')
+  @ApiOperation({ summary: 'Autosave shader for a project' })
+  async autosave(
+    @AuthenticatedUser() user: any,
+    @Param('projectId') projectId: string,
+    @Body() data: { graph: any; code: string },
+  ) {
+    const shader = await this.getShaderForProject(projectId, user.sub);
     return this.prisma.shader.update({
-      where: { id },
-      data: { graph: data.graph, code: data.code }
+      where: { id: shader.id },
+      data: { graph: data.graph, code: data.code },
     });
   }
 }

@@ -32,6 +32,7 @@ interface NodeCardProps {
   ) => void;
   anchorRefs: React.MutableRefObject<Record<string, HTMLDivElement>>;
   connectedPorts?: Set<string>;
+  readOnly: boolean;
 }
 
 const inlineParts: Record<string, string[]> = {
@@ -108,6 +109,7 @@ export function NodeCard({
   onInlineValueChange,
   anchorRefs,
   connectedPorts,
+  readOnly,
 }: NodeCardProps) {
   const def = nodeDefs[node.type];
   const [openInputs, setOpenInputs] = useState<Set<string>>(() => new Set());
@@ -145,7 +147,7 @@ export function NodeCard({
 
   return (
     <div
-      className={`node${selected ? " selected" : ""}`}
+      className={`node${selected ? " selected z-100" : ""}`}
       style={{ left: node.x, top: node.y, width: nodeWidth }}
       onMouseDown={(e) => onNodeDown(e, node.id)}
     >
@@ -170,15 +172,15 @@ export function NodeCard({
       </div>
 
       <div className="node-body">
-        <div className="ports-col">
+        <div className="flex flex-col gap-1">
           {def.inputs.map((p) => {
             const isConnected = connectedPorts?.has(`in:${p.id}`);
             const isOpen = openInputs.has(p.id) && !isConnected;
 
             return (
-              <div key={p.id} className="port-row">
+              <div key={p.id} className="flex items-center gap-1">
                 <div
-                  className={`anchor${isConnected ? " connected" : ""}`}
+                  className={`w-3.5 h-3.5 rounded-full border-[2.5px] border-white relative z-10 transition-[transform] duration-200 ${readOnly ? "" : "cursor-crosshair hover:scale-[1.35]"}`}
                   style={{ background: PortTypeColors[p.type] }}
                   ref={(el) => {
                     if (el) anchorRefs.current[`${node.id}:in:${p.id}`] = el;
@@ -227,17 +229,15 @@ export function NodeCard({
           })}
         </div>
 
-        <div className="ports-col right">
+        <div className="flex flex-col gap-1 items-end">
           {def.outputs.map((p) => (
-            <div key={p.id} className="port-row right">
+            <div key={p.id} className="flex items-center gap-1">
               <span className="text-[10px] font-mono text-muted-foreground leading-none">
                 {p.label}
               </span>
 
               <div
-                className={`anchor${
-                  connectedPorts?.has(`out:${p.id}`) ? " connected" : ""
-                }`}
+                className={`w-3.5 h-3.5 rounded-full border-[2.5px] border-white relative z-10 transition-[transform] duration-200 ${readOnly ? "" : "cursor-crosshair hover:scale-[1.35]"}`}
                 style={{ background: PortTypeColors[p.type] }}
                 ref={(el) => {
                   if (el) anchorRefs.current[`${node.id}:out:${p.id}`] = el;
