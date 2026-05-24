@@ -1,12 +1,12 @@
 import { useGraphState } from "@/components/state/graphState";
 import { authFetch } from "@/lib/authFetch";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import keycloak from "@/lib/keycloak";
 
-
-export function useSaveProject(projectId: string) {
+export function useSaveProject(projectId: string, autosaveMs: number = 2000) {
   const graph = useGraphState();
   const [isSaving, setIsSaving] = useState(false);
+  const isFirstRender = useRef(true);
 
   const save = async () => {
     if (!keycloak.authenticated) return;
@@ -29,6 +29,15 @@ export function useSaveProject(projectId: string) {
       setIsSaving(false);
     }
   };
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    const timer = setTimeout(save, autosaveMs);
+    return () => clearTimeout(timer);
+  }, [graph.nodes, graph.edges, graph.glslCode]);
 
   return { save, isSaving };
 }
