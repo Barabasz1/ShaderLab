@@ -12,7 +12,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Copy, Download, Loader2, MonitorPlay, TerminalSquare } from "lucide-react";
+import { Copy, Download, Loader2, MonitorPlay, Send, TerminalSquare } from "lucide-react";
 import ShaderCanvas, {
   type ShaderCanvasHandle,
 } from "@/components/canvas/ShaderCanvas";
@@ -60,6 +60,7 @@ interface PuzzleDetails {
 
 interface PuzzleRightPanelProps {
   puzzleId: string;
+  submissionShaderId?: string;
 }
 
 const puzzleVertexSrc = `
@@ -120,7 +121,13 @@ const toCompilerEdges = (edges: UiEdge[]): CompilerEdge[] =>
     targetHandle: edge.tgtPort,
   }));
 
-export function PuzzleRightPanel({ puzzleId }: PuzzleRightPanelProps) {
+const toSubmissionGraph = (nodes: UiNode[], edges: UiEdge[]) => ({
+  version: 1,
+  nodes,
+  edges,
+});
+
+export function PuzzleRightPanel({ puzzleId, submissionShaderId }: PuzzleRightPanelProps) {
   const canvasRef = useRef<ShaderCanvasHandle>(null);
   const puzzleCanvasRef = useRef<ShaderCanvasHandle>(null);
   const graph = useGraphState();
@@ -150,9 +157,7 @@ export function PuzzleRightPanel({ puzzleId }: PuzzleRightPanelProps) {
     puzzleCanvasRef.current?.compile(puzzleVertexSrc, puzzle.solutionShader.code);
   }, [puzzle]);
 
-  useEffect(() => {
-    if (!graph.compileRequest) return;
-
+  const compileCurrentGraph = () => {
     setGraphState({ compileError: null, runtimeError: null });
     setRating(null);
 
@@ -168,7 +173,7 @@ export function PuzzleRightPanel({ puzzleId }: PuzzleRightPanelProps) {
 
     if (evalError) {
       setGraphState({ compileError: evalError });
-      return;
+      return null;
     }
 
     const {
@@ -179,7 +184,7 @@ export function PuzzleRightPanel({ puzzleId }: PuzzleRightPanelProps) {
 
     if (glslError) {
       setGraphState({ compileError: glslError });
-      return;
+      return null;
     }
 
     const result = canvasRef.current?.compile(vertexSrc, fragmentSrc);
@@ -189,24 +194,52 @@ export function PuzzleRightPanel({ puzzleId }: PuzzleRightPanelProps) {
       runtimeError: result?.error ?? null,
     });
 
-    if (result?.error) return;
+    if (result?.error) return null;
+
+    return fragmentSrc;
+  };
+
+  useEffect(() => {
+    if (!graph.compileRequest) return;
+    compileCurrentGraph();
+  }, [graph.compileRequest]);
+
+  const submitPuzzle = async () => {
+    if (isSubmitting) return;
+
+    if (!submissionShaderId) {
+      setGraphState({ runtimeError: "Puzzle submission shader is not loaded yet" });
+      return;
+    }
+
+    const code = compileCurrentGraph();
+    if (code === null) return;
 
     setIsSubmitting(true);
-    authFetch(`/api/puzzles/${puzzleId}/submissions`, {
-      method: "POST",
-      body: JSON.stringify({ code: fragmentSrc }),
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to submit puzzle solution");
-        return res.json();
-      })
-      .then((data) => {
-        setRating(data.rating);
-        if (puzzle && data.rating >= puzzle.passingRating) setPassedOpen(true);
-      })
-      .catch((err) => setGraphState({ runtimeError: err.message }))
-      .finally(() => setIsSubmitting(false));
-  }, [graph.compileRequest]);
+
+    try {
+      const res = await authFetch(`/api/puzzles/${puzzleId}/submissions`, {
+        method: "POST",
+        body: JSON.stringify({
+          shaderId: submissionShaderId,
+          graph: toSubmissionGraph(graph.nodes, graph.edges),
+          code,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to submit puzzle solution");
+
+      const data = await res.json();
+      setRating(data.rating);
+      if (puzzle && data.rating >= puzzle.passingRating) setPassedOpen(true);
+    } catch (err) {
+      setGraphState({
+        runtimeError: err instanceof Error ? err.message : "Failed to submit puzzle solution",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const error = graph.compileError ?? graph.runtimeError ?? puzzleError;
 
@@ -217,7 +250,22 @@ export function PuzzleRightPanel({ puzzleId }: PuzzleRightPanelProps) {
           <MonitorPlay className="w-4 h-4 text-brand" />
           Puzzle Output
         </span>
-        {isSubmitting && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+        <div className="flex items-center gap-2">
+          {isSubmitting && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+          <Button
+            size="sm"
+            className="h-7 px-2 text-xs"
+            onClick={submitPuzzle}
+            disabled={isSubmitting || !submissionShaderId}
+          >
+            {isSubmitting ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Send className="w-3.5 h-3.5" />
+            )}
+            Submit
+          </Button>
+        </div>
       </div>
       <Separator />
       <div className="flex flex-col h-full overflow-hidden">

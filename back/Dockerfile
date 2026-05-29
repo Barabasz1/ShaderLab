@@ -26,4 +26,5 @@ USER node
 EXPOSE 3000
 
 
-CMD ["sh", "-c", "prisma db push && node dist/src/main.js"]
+# CMD ["sh", "-c", "prisma db push && node dist/src/main.js"]
+CMD ["sh", "-c", "prisma db push --accept-data-loss && node dist/src/main.js"]

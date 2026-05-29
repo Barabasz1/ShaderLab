@@ -19,6 +19,8 @@ services:
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HOSTNAME: http://keycloak.localhost:8080
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
     ports:
       - "8080:8080"
     command: start-dev
@@ -26,7 +28,29 @@ services:
       - postgres
     networks:
       - app_network
-    
+
+  terraform:
+    image: hashicorp/terraform:latest
+    working_dir: /terraform
+    volumes:
+      - ./terraform:/terraform
+    environment:
+      TF_VAR_keycloak_url: http://keycloak:8080
+    entrypoint: /bin/sh
+    command: >
+      -c "
+        until wget -q -O- http://keycloak:8080/realms/master >/dev/null 2>&1; do
+          echo 'waiting for keycloak...';
+          sleep 3;
+        done;
+        terraform init &&
+        terraform apply -auto-approve
+      "
+    depends_on:
+      - keycloak
+    networks:
+      - app_network
+
   api:
     build:
       context: ./back
@@ -35,15 +59,34 @@ services:
     ports:
       - "3000:3000"
     extra_hosts:
-      - "localhost:host-gateway"
+      - "keycloak.localhost:host-gateway"
     environment:
       DATABASE_URL: postgresql://admin:password123@postgres:5432/nestjs_db?schema=public
-      KEYCLOAK_AUTH_SERVER_URL: http://localhost:8080
+      KEYCLOAK_AUTH_SERVER_URL: http://keycloak.localhost:8080
       KEYCLOAK_REALM: shaderlab
       KEYCLOAK_CLIENT_ID: shaderlab_client
     depends_on:
       - postgres
       - keycloak
+      - terraform
+    networks:
+      - app_network
+
+  front:
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+      args:
+        VITE_KEYCLOAK_URL: http://keycloak.localhost:8080
+        VITE_KEYCLOAK_REALM: shaderlab
+        VITE_KEYCLOAK_CLIENT_ID: shaderlab_client
+    container_name: shaderlab_front
+    ports:
+      - "${FRONTEND_PORT:-5173}:80"
+    environment:
+      BACKEND_URL: http://api:3000
+    depends_on:
+      - api
     networks:
       - app_network
 
@@ -52,4 +95,4 @@ networks:
     driver: bridge
 
 volumes:
-  postgres_data:   
+  postgres_data:

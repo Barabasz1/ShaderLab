@@ -9,6 +9,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { authFetch } from "@/lib/authFetch";
+import { useState } from "react";
 
 export interface PuzzleListItem {
   id: string;
@@ -24,6 +26,10 @@ interface PuzzlesDashboardProps {
   error: Error | null;
 }
 
+interface SubmissionShaderResponse {
+  shaderId: string;
+}
+
 export function PuzzlesDashboard({
   title,
   subtitle,
@@ -32,12 +38,31 @@ export function PuzzlesDashboard({
   error,
 }: PuzzlesDashboardProps) {
   const navigate = useNavigate();
+  const [openingPuzzleId, setOpeningPuzzleId] = useState<string | null>(null);
+  const [openError, setOpenError] = useState<string | null>(null);
 
-  const openPuzzle = (puzzleId: string) => {
-    navigate({
-      to: "/puzzles/$puzzleId",
-      params: { puzzleId },
-    });
+  const openPuzzle = async (puzzleId: string) => {
+    if (openingPuzzleId) return;
+
+    setOpeningPuzzleId(puzzleId);
+    setOpenError(null);
+
+    try {
+      const res = await authFetch(`/api/puzzles/${puzzleId}/submission-shader`);
+      if (!res.ok) throw new Error("Failed to load your puzzle submission shader");
+
+      const { shaderId } = (await res.json()) as SubmissionShaderResponse;
+
+      await navigate({
+        to: "/$projectId/editor",
+        params: { projectId: shaderId },
+        search: { puzzleId },
+      });
+    } catch (err) {
+      setOpenError(err instanceof Error ? err.message : "Failed to open puzzle");
+    } finally {
+      setOpeningPuzzleId(null);
+    }
   };
 
   return (
@@ -48,6 +73,12 @@ export function PuzzlesDashboard({
           <p className="text-muted-foreground mt-2">{subtitle}</p>
         </div>
       </div>
+
+      {openError && (
+        <div className="text-red-500 bg-red-500/10 p-4 rounded-md mb-4">
+          {openError}
+        </div>
+      )}
 
       {isLoading ? (
         <div className="flex justify-center items-center h-64">
@@ -64,50 +95,59 @@ export function PuzzlesDashboard({
       ) : (
         <div className="flex-1 overflow-y-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {puzzles.map((puzzle) => (
-              <Card
-                key={puzzle.id}
-                role="button"
-                tabIndex={0}
-                onClick={() => openPuzzle(puzzle.id)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    openPuzzle(puzzle.id);
-                  }
-                }}
-                className="flex flex-col pt-0 h-full cursor-pointer overflow-hidden transition hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              >
-                <div
-                  className={`h-40 w-full bg-linear-to-br ${getGradientForId(
-                    puzzle.id,
-                  )}`}
-                />
+            {puzzles.map((puzzle) => {
+              const isOpening = openingPuzzleId === puzzle.id;
 
-                <CardHeader className="relative">
-                  <CardTitle>{puzzle.name ?? "Untitled Puzzle"}</CardTitle>
-                  <CardDescription className="min-h-5">
-                    {puzzle.description ?? ""}
-                  </CardDescription>
-                </CardHeader>
-
-                <CardFooter className="flex justify-between items-center border-t pt-6 mt-auto">
-                  <span className="text-sm text-muted-foreground">
-                    Puzzle challenge
-                  </span>
-                  <Button
-                    variant="default"
-                    onClick={(event) => {
-                      event.stopPropagation();
+              return (
+                <Card
+                  key={puzzle.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => openPuzzle(puzzle.id)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
                       openPuzzle(puzzle.id);
-                    }}
-                  >
-                    <PuzzleIcon className="mr-2 h-4 w-4" />
-                    Open Puzzle
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
+                    }
+                  }}
+                  className="flex flex-col pt-0 h-full cursor-pointer overflow-hidden transition hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  <div
+                    className={`h-40 w-full bg-linear-to-br ${getGradientForId(
+                      puzzle.id,
+                    )}`}
+                  />
+
+                  <CardHeader className="relative">
+                    <CardTitle>{puzzle.name ?? "Untitled Puzzle"}</CardTitle>
+                    <CardDescription className="min-h-5">
+                      {puzzle.description ?? ""}
+                    </CardDescription>
+                  </CardHeader>
+
+                  <CardFooter className="flex justify-between items-center border-t pt-6 mt-auto">
+                    <span className="text-sm text-muted-foreground">
+                      Puzzle challenge
+                    </span>
+                    <Button
+                      variant="default"
+                      disabled={isOpening}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        openPuzzle(puzzle.id);
+                      }}
+                    >
+                      {isOpening ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <PuzzleIcon className="mr-2 h-4 w-4" />
+                      )}
+                      Open Puzzle
+                    </Button>
+                  </CardFooter>
+                </Card>
+              );
+            })}
           </div>
         </div>
       )}
