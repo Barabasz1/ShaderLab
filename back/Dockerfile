@@ -25,5 +25,5 @@ RUN chown -R node:node /usr/src/app
 USER node
 EXPOSE 3000
 
-# Push the schema automatically, then start the app!
+
 CMD ["sh", "-c", "prisma db push && node dist/src/main.js"]

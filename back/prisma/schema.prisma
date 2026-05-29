@@ -22,38 +22,38 @@ model User {
   @@map("users")
 }
 
-model Project {
-  id          String  @id @default(uuid())
-  name        String
-  description String?
-  isPublic      Boolean @default(false)
+  model Project {
+    id          String  @id @default(uuid())
+    name        String
+    description String?
+    isPublic      Boolean @default(false)
 
-  ownerId String @map("owner")
-  owner   User   @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+    ownerId String @map("owner")
+    owner   User   @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
 
-  collaborators ProjectCollaboration[]
-  shaders       ProjectShader[]
+    collaborators ProjectCollaboration[]
+    shaders       ProjectShader[]
 
-  @@map("projects")
-}
+    @@map("projects")
+  }
 
-model Shader {
-  id    String  @id @default(uuid())
-  graph Json
-  code  String?
+  model Shader {
+    id    String  @id @default(uuid())
+    graph Json
+    code  String?
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
 
-  projectLinks ProjectShader[]
-  puzzles      Puzzle[]           @relation("PuzzleSolution")
-  submissions  PuzzleSubmission[] @relation("SubmissionShader")
+    projectLinks ProjectShader[]
+    puzzles      Puzzle[]           @relation("PuzzleSolution")
+    submissions  PuzzleSubmission[] @relation("SubmissionShader")
 
-  @@map("shaders")
-}
+    @@map("shaders")
+  }
 
 model ProjectShader {
   shaderId  String  @map("shader_id")
@@ -84,12 +84,14 @@ model Puzzle {
   name        String?
   description String?
 
+  passingRating Float
+
   shaderId       String @map("shader_id")
   solutionShader Shader @relation("PuzzleSolution", fields: [shaderId], references: [id], onDelete: Cascade)
 
   submissions PuzzleSubmission[]
 
-  @@map("puzzles")
+  @@map("puzzles")  
 }
 
 model PuzzleSubmission {
@@ -105,5 +107,5 @@ model PuzzleSubmission {
   shaderId String @map("shader_id")
   shader   Shader @relation("SubmissionShader", fields: [shaderId], references: [id], onDelete: Cascade)
 
-  @@map("puzzle_submitions")
+  @@map("puzzle_submissions")
 }

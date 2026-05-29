@@ -1,6 +1,6 @@
 import { Canvas } from "@/components/canvas/Canvas";
 import { LeftSidebar } from "@/components/canvas/LeftSidebar";
-import { RightPanel } from "@/components/canvas/RightPanel";
+import { PuzzleRightPanel } from "@/components/canvas/PuzzleRightPanel";
 import { Topbar } from "@/components/layout/Topbar";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,49 +11,35 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { createFileRoute } from "@tanstack/react-router";
-import { requestCompile, saveGraphSnapshot } from "@/components/state/graphState";
-import { Download, Loader2, Play, Redo2, Save, Undo2 } from "lucide-react";
-import { useProjectLoader } from "@/hooks/useProjectLoader";
-import { useSaveProject } from "@/hooks/useSaveProject";
+import { requestCompile, setGraphState, saveGraphSnapshot } from "@/components/state/graphState";
+import { Play, Download } from "lucide-react";
+import { useEffect } from "react";
 
-export const Route = createFileRoute("/_auth/$projectId/editor")({
+export const Route = createFileRoute("/_auth/puzzles/$puzzleId")({
   component: RouteComponent,
 });
 
 function RouteComponent() {
-  const { projectId } = Route.useParams();
-  const { isLoading } = useProjectLoader(projectId);
-  const { save, isSaving } = useSaveProject(projectId);
+  const { puzzleId } = Route.useParams();
+
+  useEffect(() => {
+    setGraphState({
+      nodes: [],
+      edges: [],
+      glslCode: "",
+      compileError: null,
+      runtimeError: null,
+    });
+  }, [puzzleId]);
 
   return (
     <div className="h-svh flex flex-col overflow-hidden">
       <Topbar>
-        <Button variant="outline" size="sm" className="h-7 px-2 text-xs">
-          <Undo2 className="w-3.5 h-3.5" />
-        </Button>
-        <Button variant="outline" size="sm" className="h-7 px-2 text-xs">
-          <Redo2 className="w-3.5 h-3.5" />
-        </Button>
-        <Separator orientation="vertical" className="h-6" />
         <Button
           variant="outline"
           size="sm"
           className="h-7 px-2 text-xs"
-          onClick={() => save()}
-          disabled={isSaving}
-        >
-          {isSaving ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          ) : (
-            <Save className="w-3.5 h-3.5" />
-          )}
-          Save
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-7 px-2 text-xs"
-          onClick={() => saveGraphSnapshot("shader")}
+          onClick={() => saveGraphSnapshot(`puzzle-${puzzleId}`)}
         >
           <Download className="w-3.5 h-3.5" />
         </Button>
@@ -76,17 +62,11 @@ function RouteComponent() {
             className="flex-1 min-h-0"
           >
             <ResizablePanel defaultSize={"75%"} minSize={"40%"}>
-              {isLoading ? (
-                <div className="h-full flex items-center justify-center">
-                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-                </div>
-              ) : (
-                <Canvas readOnly={false} />
-              )}
+              <Canvas readOnly={false} />
             </ResizablePanel>
             <ResizableHandle />
-            <ResizablePanel defaultSize={"20%"} minSize={"15%"} maxSize={"30%"}>
-              <RightPanel />
+            <ResizablePanel defaultSize={"25%"} minSize={"20%"} maxSize={"40%"}>
+              <PuzzleRightPanel puzzleId={puzzleId} />
             </ResizablePanel>
           </ResizablePanelGroup>
         </SidebarInset>

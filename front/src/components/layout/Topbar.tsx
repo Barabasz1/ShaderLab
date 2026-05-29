@@ -30,6 +30,9 @@ export function Topbar({ children }: TopbarProps) {
       <Link to="/community" className={navLinkClass}>
         Community
       </Link>
+      <Link to="/puzzles" className={navLinkClass}>
+        Puzzles
+      </Link>
       <Link to="/profile" className={navLinkClass}>
         Profile
       </Link>

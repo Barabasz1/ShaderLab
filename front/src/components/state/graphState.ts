@@ -58,7 +58,20 @@ export const requestCompile = () => {
   emit();
 };
 
-export const saveGraphSnapshot = () => {
+const safeFileName = (name: string) =>
+  name.trim().replace(/[^a-z0-9-_]+/gi, "-").replace(/^-+|-+$/g, "") || "shader";
+
+const downloadFile = (name: string, content: string, type: string) => {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+export const saveGraphSnapshot = (name = "shader") => {
   const snapshot = {
     version: 1,
     savedAt: new Date().toISOString(),
@@ -67,15 +80,15 @@ export const saveGraphSnapshot = () => {
     glslCode: state.glslCode,
   };
 
-  const blob = new Blob([JSON.stringify(snapshot, null, 2)], {
-    type: "application/json",
-  });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "nodeflow-graph.json";
-  a.click();
-  URL.revokeObjectURL(url);
+  downloadFile(
+    `${safeFileName(name)}.json`,
+    JSON.stringify(snapshot, null, 2),
+    "application/json",
+  );
+};
+
+export const saveGlslCode = (name = "shader") => {
+  downloadFile(`${safeFileName(name)}.glsl`, state.glslCode, "text/plain");
 };
 
 export const useGraphState = () =>

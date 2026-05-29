@@ -1,0 +1,7 @@
+{
+  "graph": {
+    "nodes": [],
+    "edges": []
+  },
+  "code": "#version 100\nprecision mediump float;\n\nuniform float u_time;\nuniform vec2  u_resolution;\nvarying vec2  v_uv;\n\nvoid main() {\n  vec4 v_107_out = vec4(1.000000,\n            0.000000,\n            0.000000,\n            1.000000);\n  gl_FragColor = v_107_out;\n}"
+}

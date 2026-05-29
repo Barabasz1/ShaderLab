@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Copy, MonitorPlay, TerminalSquare } from "lucide-react";
+import { Copy, Download, MonitorPlay, TerminalSquare } from "lucide-react";
 import ShaderCanvas, {
   type ShaderCanvasHandle,
 } from "@/components/canvas/ShaderCanvas";
@@ -12,6 +12,7 @@ import { translateToGLSL } from "@/glsl/translator";
 import { nodeDefs } from "@/nodes/nodeDefs";
 import {
   setGraphState,
+  saveGlslCode,
   useGraphState,
   type ControlValue,
   type UiEdge,
@@ -165,15 +166,27 @@ export function RightPanel() {
               <TerminalSquare className="w-4 h-4" />
               Generated GLSL
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className=" text-brand hover:text-brand-dark"
-              onClick={() => navigator.clipboard?.writeText(graph.glslCode)}
-            >
-              <Copy className="w-3 h-3 mr-1" />
-              Copy
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-brand hover:text-brand-dark"
+                onClick={() => saveGlslCode("shader")}
+                disabled={!graph.glslCode}
+              >
+                <Download className="w-3 h-3" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-brand hover:text-brand-dark"
+                onClick={() => navigator.clipboard?.writeText(graph.glslCode)}
+                disabled={!graph.glslCode}
+              >
+                <Copy className="w-3 h-3 mr-1" />
+                Copy
+              </Button>
+            </div>
           </div>
           <ScrollArea className="flex-1 min-h-0 rounded-md bg-muted/30 border shadow-inner">
             <div className="p-4 min-w-max">

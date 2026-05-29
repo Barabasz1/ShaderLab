@@ -12,10 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthPuzzlesRouteImport } from './routes/_auth/puzzles'
 import { Route as AuthProfileRouteImport } from './routes/_auth/profile'
 import { Route as AuthDashboardRouteImport } from './routes/_auth/dashboard'
 import { Route as AuthCreateProjectRouteImport } from './routes/_auth/createProject'
 import { Route as ProjectIdViewerRouteImport } from './routes/$projectId.viewer'
+import { Route as AuthPuzzlesPuzzleIdRouteImport } from './routes/_auth/puzzles.$puzzleId'
 import { Route as AuthProjectIdEditorRouteImport } from './routes/_auth/$projectId.editor'
 import { Route as AuthProjectIdEditProjectRouteImport } from './routes/_auth/$projectId.editProject'
 
@@ -32,6 +34,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthPuzzlesRoute = AuthPuzzlesRouteImport.update({
+  id: '/puzzles',
+  path: '/puzzles',
+  getParentRoute: () => AuthRoute,
 } as any)
 const AuthProfileRoute = AuthProfileRouteImport.update({
   id: '/profile',
@@ -53,6 +60,11 @@ const ProjectIdViewerRoute = ProjectIdViewerRouteImport.update({
   path: '/$projectId/viewer',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthPuzzlesPuzzleIdRoute = AuthPuzzlesPuzzleIdRouteImport.update({
+  id: '/$puzzleId',
+  path: '/$puzzleId',
+  getParentRoute: () => AuthPuzzlesRoute,
+} as any)
 const AuthProjectIdEditorRoute = AuthProjectIdEditorRouteImport.update({
   id: '/$projectId/editor',
   path: '/$projectId/editor',
@@ -72,8 +84,10 @@ export interface FileRoutesByFullPath {
   '/createProject': typeof AuthCreateProjectRoute
   '/dashboard': typeof AuthDashboardRoute
   '/profile': typeof AuthProfileRoute
+  '/puzzles': typeof AuthPuzzlesRouteWithChildren
   '/$projectId/editProject': typeof AuthProjectIdEditProjectRoute
   '/$projectId/editor': typeof AuthProjectIdEditorRoute
+  '/puzzles/$puzzleId': typeof AuthPuzzlesPuzzleIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -82,8 +96,10 @@ export interface FileRoutesByTo {
   '/createProject': typeof AuthCreateProjectRoute
   '/dashboard': typeof AuthDashboardRoute
   '/profile': typeof AuthProfileRoute
+  '/puzzles': typeof AuthPuzzlesRouteWithChildren
   '/$projectId/editProject': typeof AuthProjectIdEditProjectRoute
   '/$projectId/editor': typeof AuthProjectIdEditorRoute
+  '/puzzles/$puzzleId': typeof AuthPuzzlesPuzzleIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -94,8 +110,10 @@ export interface FileRoutesById {
   '/_auth/createProject': typeof AuthCreateProjectRoute
   '/_auth/dashboard': typeof AuthDashboardRoute
   '/_auth/profile': typeof AuthProfileRoute
+  '/_auth/puzzles': typeof AuthPuzzlesRouteWithChildren
   '/_auth/$projectId/editProject': typeof AuthProjectIdEditProjectRoute
   '/_auth/$projectId/editor': typeof AuthProjectIdEditorRoute
+  '/_auth/puzzles/$puzzleId': typeof AuthPuzzlesPuzzleIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -106,8 +124,10 @@ export interface FileRouteTypes {
     | '/createProject'
     | '/dashboard'
     | '/profile'
+    | '/puzzles'
     | '/$projectId/editProject'
     | '/$projectId/editor'
+    | '/puzzles/$puzzleId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -116,8 +136,10 @@ export interface FileRouteTypes {
     | '/createProject'
     | '/dashboard'
     | '/profile'
+    | '/puzzles'
     | '/$projectId/editProject'
     | '/$projectId/editor'
+    | '/puzzles/$puzzleId'
   id:
     | '__root__'
     | '/'
@@ -127,8 +149,10 @@ export interface FileRouteTypes {
     | '/_auth/createProject'
     | '/_auth/dashboard'
     | '/_auth/profile'
+    | '/_auth/puzzles'
     | '/_auth/$projectId/editProject'
     | '/_auth/$projectId/editor'
+    | '/_auth/puzzles/$puzzleId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -161,6 +185,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_auth/puzzles': {
+      id: '/_auth/puzzles'
+      path: '/puzzles'
+      fullPath: '/puzzles'
+      preLoaderRoute: typeof AuthPuzzlesRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_auth/profile': {
       id: '/_auth/profile'
       path: '/profile'
@@ -189,6 +220,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProjectIdViewerRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_auth/puzzles/$puzzleId': {
+      id: '/_auth/puzzles/$puzzleId'
+      path: '/$puzzleId'
+      fullPath: '/puzzles/$puzzleId'
+      preLoaderRoute: typeof AuthPuzzlesPuzzleIdRouteImport
+      parentRoute: typeof AuthPuzzlesRoute
+    }
     '/_auth/$projectId/editor': {
       id: '/_auth/$projectId/editor'
       path: '/$projectId/editor'
@@ -206,10 +244,23 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthPuzzlesRouteChildren {
+  AuthPuzzlesPuzzleIdRoute: typeof AuthPuzzlesPuzzleIdRoute
+}
+
+const AuthPuzzlesRouteChildren: AuthPuzzlesRouteChildren = {
+  AuthPuzzlesPuzzleIdRoute: AuthPuzzlesPuzzleIdRoute,
+}
+
+const AuthPuzzlesRouteWithChildren = AuthPuzzlesRoute._addFileChildren(
+  AuthPuzzlesRouteChildren,
+)
+
 interface AuthRouteChildren {
   AuthCreateProjectRoute: typeof AuthCreateProjectRoute
   AuthDashboardRoute: typeof AuthDashboardRoute
   AuthProfileRoute: typeof AuthProfileRoute
+  AuthPuzzlesRoute: typeof AuthPuzzlesRouteWithChildren
   AuthProjectIdEditProjectRoute: typeof AuthProjectIdEditProjectRoute
   AuthProjectIdEditorRoute: typeof AuthProjectIdEditorRoute
 }
@@ -218,6 +269,7 @@ const AuthRouteChildren: AuthRouteChildren = {
   AuthCreateProjectRoute: AuthCreateProjectRoute,
   AuthDashboardRoute: AuthDashboardRoute,
   AuthProfileRoute: AuthProfileRoute,
+  AuthPuzzlesRoute: AuthPuzzlesRouteWithChildren,
   AuthProjectIdEditProjectRoute: AuthProjectIdEditProjectRoute,
   AuthProjectIdEditorRoute: AuthProjectIdEditorRoute,
 }
