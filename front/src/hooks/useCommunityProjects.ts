@@ -11,9 +11,14 @@ export function useCommunityProjects(page: number, pageSize = 9, search = "") {
         pageSize: String(pageSize),
         ...(search && { search }),
       });
-      const res = await authFetch(`/api/projects/community?${params}`);
+      const res = await fetch(
+        `/api/projects/community?page=${page}&pageSize=${pageSize}&search=${search}}`,
+      );
       if (!res.ok) throw new Error("Failed to fetch projects");
-      return res.json() as Promise<{ projects: BackendProject[]; total: number }>;
+      return res.json() as Promise<{
+        projects: BackendProject[];
+        total: number;
+      }>;
     },
   });
 }

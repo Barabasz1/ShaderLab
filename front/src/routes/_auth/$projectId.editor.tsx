@@ -28,13 +28,6 @@ function RouteComponent() {
   return (
     <div className="h-svh flex flex-col overflow-hidden">
       <Topbar>
-        <Button variant="outline" size="sm" className="h-7 px-2 text-xs">
-          <Undo2 className="w-3.5 h-3.5" />
-        </Button>
-        <Button variant="outline" size="sm" className="h-7 px-2 text-xs">
-          <Redo2 className="w-3.5 h-3.5" />
-        </Button>
-        <Separator orientation="vertical" className="h-6" />
         <Button
           variant="outline"
           size="sm"

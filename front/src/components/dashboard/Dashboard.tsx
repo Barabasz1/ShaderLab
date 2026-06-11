@@ -17,6 +17,7 @@ import {
 } from "../ui/alert-dialog";
 import { Pagination } from "./Pagination";
 import { BackendProject } from "@/hooks/useProjects";
+import { useQueryClient } from "@tanstack/react-query";
 
 
 
@@ -61,6 +62,7 @@ export function Dashboard({
   pageSize,
   onPageChange,
   }: DashboardProps) {
+  const queryClient = useQueryClient();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const projects = data?.projects ?? [];
@@ -72,6 +74,7 @@ export function Dashboard({
     try {
       await authFetch(`/api/projects/${deletingId}`, { method: "DELETE" });
       setDeletingId(null);
+      queryClient.invalidateQueries({queryKey: ["projects", page]});
     } catch (err) {
       console.error("Failed to delete:", err);
     } finally {

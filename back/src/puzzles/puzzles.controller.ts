@@ -7,20 +7,32 @@ import {
   Body,
   NotFoundException,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { AuthenticatedUser, Unprotected } from 'nest-keycloak-connect';
 import { PrismaService } from '../prisma/prisma.service';
 import { compareShaders } from './puzzle_evaluator';
 
 @ApiTags('Puzzles')
 @ApiBearerAuth()
-@Controller('puzzles')
+@Controller({ version: '1', path: 'puzzles' })
 export class PuzzlesController {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   @Get()
   @Unprotected()
   @ApiBearerAuth('')
+  @ApiOperation({
+    summary: 'Get all puzzles',
+    description:
+      'Returns a list of all available puzzles. No authentication required.',
+  })
+  @ApiResponse({ status: 200, description: 'List of puzzles returned.' })
   async getPuzzles() {
     return this.prisma.puzzle.findMany({
       select: { id: true, name: true, description: true },
@@ -30,6 +42,14 @@ export class PuzzlesController {
   @Get(':id')
   @Unprotected()
   @ApiBearerAuth('')
+  @ApiOperation({
+    summary: 'Get puzzle by ID',
+    description:
+      'Returns a single puzzle with its details and passing rating. No authentication required.',
+  })
+  @ApiParam({ name: 'id', description: 'Puzzle UUID' })
+  @ApiResponse({ status: 200, description: 'Puzzle returned.' })
+  @ApiResponse({ status: 404, description: 'Puzzle not found.' })
   async getPuzzleById(@Param('id') id: string) {
     const puzzle = await this.prisma.puzzle.findUnique({
       where: { id },
@@ -39,7 +59,7 @@ export class PuzzlesController {
         description: true,
         passingRating: true,
         solutionShader: {
-          select: { code: true }, // delete 
+          select: { code: true }, // delete
         },
       },
     });
@@ -64,7 +84,7 @@ export class PuzzlesController {
   //   const png = this.shaderRenderer.renderToPng(puzzle.solutionShader.code);
 
   //   res.setHeader('Content-Type', 'image/png');
-  //   res.setHeader('Cache-Control', 'public, max-age=86400'); 
+  //   res.setHeader('Cache-Control', 'public, max-age=86400');
   //   res.send(png);
   // }
 

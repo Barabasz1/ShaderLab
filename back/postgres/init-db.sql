@@ -1,0 +1,2 @@
+CREATE DATABASE keycloak_db;
+CREATE DATABASE nestjs_db;

@@ -7,13 +7,19 @@ import {
   UnauthorizedException,
   NotFoundException,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { AuthenticatedUser } from 'nest-keycloak-connect';
 import { PrismaService } from '../prisma/prisma.service';
 
 @ApiTags('Shaders')
 @ApiBearerAuth()
-@Controller('shaders')
+@Controller({ version: '1', path: 'shaders' })
 export class ShadersController {
   constructor(private prisma: PrismaService) {}
 
@@ -22,10 +28,7 @@ export class ShadersController {
       where: {
         projectId,
         project: {
-          OR: [
-            { ownerId: userId },
-            { collaborators: { some: { userId } } },
-          ],
+          OR: [{ ownerId: userId }, { collaborators: { some: { userId } } }],
         },
       },
       include: { shader: true },
@@ -35,6 +38,17 @@ export class ShadersController {
   }
 
   @Get('project/:projectId')
+  @ApiOperation({
+    summary: 'Get shader',
+    description:
+      'Returns the shader linked to a project. Accessible by the project owner.',
+  })
+  @ApiParam({ name: 'projectId', description: 'Project UUID' })
+  @ApiResponse({ status: 200, description: 'Shader returned.' })
+  @ApiResponse({
+    status: 404,
+    description: 'Shader not found or access denied.',
+  })
   async getShader(
     @AuthenticatedUser() user: any,
     @Param('projectId') projectId: string,
@@ -43,7 +57,17 @@ export class ShadersController {
   }
 
   @Patch('project/:projectId/autosave')
-  @ApiOperation({ summary: 'Autosave shader for a project' })
+  @ApiOperation({
+    summary: 'Autosave shader',
+    description:
+      'Saves the current graph and generated GLSL code for a project shader. Accessible by the project owner.',
+  })
+  @ApiParam({ name: 'projectId', description: 'Project UUID' })
+  @ApiResponse({ status: 200, description: 'Shader saved.' })
+  @ApiResponse({
+    status: 404,
+    description: 'Shader not found or access denied.',
+  })
   async autosave(
     @AuthenticatedUser() user: any,
     @Param('projectId') projectId: string,

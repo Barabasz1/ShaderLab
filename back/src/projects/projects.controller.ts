@@ -10,19 +10,31 @@ import {
   Patch,
   Query,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
-import { AuthenticatedUser, Unprotected } from 'nest-keycloak-connect';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiQuery,
+  ApiParam,
+} from '@nestjs/swagger';
+import { AuthenticatedUser, Public, Unprotected } from 'nest-keycloak-connect';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client/extension';
 
 @ApiTags('Projects')
 @ApiBearerAuth()
-@Controller('projects')
+@Controller({ version: '1', path: 'projects' })
 export class ProjectsController {
   constructor(private prisma: PrismaService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a project and its first linked shader' })
+  @ApiOperation({
+    summary: 'Create a project',
+    description:
+      'Creates a new project with an initial empty shader for the authenticated user.',
+  })
+  @ApiResponse({ status: 201, description: 'Project created successfully.' })
   async createProject(
     @Body() data: { name: string },
     @AuthenticatedUser() user: any,
@@ -46,7 +58,32 @@ export class ProjectsController {
     });
   }
 
+  @Public()
   @Get('community')
+  @ApiOperation({
+    summary: 'Get community projects',
+    description:
+      'Returns a paginated list of all public projects. No authentication required.',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'pageSize',
+    required: false,
+    description: 'Number of results per page (default: 9)',
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    description: 'Filter projects by name',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Paginated list of public projects.',
+  })
   async getCommunityProjects(
     @Query('page') page = '1',
     @Query('pageSize') pageSize = '9',
@@ -76,6 +113,13 @@ export class ProjectsController {
   }
 
   @Get(':id')
+  @ApiOperation({
+    summary: 'Get project by ID',
+    description: 'Returns a single project with its shaders.',
+  })
+  @ApiParam({ name: 'id', description: 'Project UUID' })
+  @ApiResponse({ status: 200, description: 'Project found.' })
+  @ApiResponse({ status: 404, description: 'Project not found.' })
   async getProjectById(@Param('id') id: string) {
     const project = await this.prisma.project.findUnique({
       where: { id },
@@ -90,6 +134,22 @@ export class ProjectsController {
   }
 
   @Get()
+  @ApiOperation({
+    summary: 'Get my projects',
+    description:
+      'Returns a paginated list of projects owned by the authenticated user.',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'pageSize',
+    required: false,
+    description: 'Number of results per page (default: 9)',
+  })
+  @ApiResponse({ status: 200, description: 'Paginated list of user projects.' })
   async getUserProjects(
     @AuthenticatedUser() user: any,
     @Query('page') page = '1',
@@ -113,6 +173,18 @@ export class ProjectsController {
   }
 
   @Delete(':id')
+  @ApiOperation({
+    summary: 'Delete a project',
+    description:
+      'Deletes a project. Only the project owner can perform this action.',
+  })
+  @ApiParam({ name: 'id', description: 'Project UUID' })
+  @ApiResponse({ status: 200, description: 'Project deleted.' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden — not the project owner.',
+  })
+  @ApiResponse({ status: 404, description: 'Project not found.' })
   @ApiOperation({ summary: 'Delete a project' })
   async deleteProject(@Param('id') id: string, @AuthenticatedUser() user: any) {
     const project = await this.prisma.project.findUnique({ where: { id } });
@@ -123,7 +195,18 @@ export class ProjectsController {
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update project name, description and visibility' })
+  @ApiOperation({
+    summary: 'Update a project',
+    description:
+      'Updates project name, description, or visibility. Only the project owner can perform this action.',
+  })
+  @ApiParam({ name: 'id', description: 'Project UUID' })
+  @ApiResponse({ status: 200, description: 'Project updated.' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden — not the project owner.',
+  })
+  @ApiResponse({ status: 404, description: 'Project not found.' })
   async updateProject(
     @Param('id') id: string,
     @Body() data: { name?: string; description?: string; isPublic?: boolean },

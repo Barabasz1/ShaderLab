@@ -1,32 +1,45 @@
 version: '3.8'
-
 services:
   postgres:
     image: postgres:15
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: password123
-      POSTGRES_DB: nestjs_db
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./back/postgres/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     networks:
       - app_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   keycloak:
     image: quay.io/keycloak/keycloak:latest
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HOSTNAME: http://localhost:8080
+      KC_HTTP_ENABLED: "true"
+      KC_DB: postgres
+      KC_DB_URL_HOST: postgres
+      KC_DB_URL_DATABASE: keycloak_db
+      KC_DB_USERNAME: admin
+      KC_DB_PASSWORD: password123
     ports:
       - "8080:8080"
-    command: start-dev
+    command: start-dev --import-realm
+    volumes:
+      - ./back/keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     networks:
       - app_network
-    
   api:
     build:
       context: ./back
@@ -42,8 +55,9 @@ services:
       KEYCLOAK_REALM: shaderlab
       KEYCLOAK_CLIENT_ID: shaderlab_client
     depends_on:
-      - postgres
-      - keycloak
+      postgres:
+        condition: service_healthy
+
     networks:
       - app_network
 
@@ -52,4 +66,4 @@ networks:
     driver: bridge
 
 volumes:
-  postgres_data:   
+  postgres_data:
