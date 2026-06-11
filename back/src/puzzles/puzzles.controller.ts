@@ -16,7 +16,7 @@ import {
 } from '@nestjs/swagger';
 import { AuthenticatedUser, Unprotected } from 'nest-keycloak-connect';
 import { PrismaService } from '../prisma/prisma.service';
-import { compareShaders } from './puzzle_evaluator';
+
 
 @ApiTags('Puzzles')
 @ApiBearerAuth()
@@ -59,7 +59,7 @@ export class PuzzlesController {
         description: true,
         passingRating: true,
         solutionShader: {
-          select: { code: true }, // delete
+          select: { code: true }, 
         },
       },
     });
@@ -68,70 +68,61 @@ export class PuzzlesController {
     return puzzle;
   }
 
-  // @Get(':id/preview')
-  // @Unprotected()
-  // async getPuzzlePreview(
-  //   @Param('id') id: string,
-  //   @Res() res: Response,
-  // ) {
-  //   const puzzle = await this.prisma.puzzle.findUnique({
-  //     where: { id },
-  //     select: { solutionShader: { select: { code: true } } },
-  //   });
 
-  //   if (!puzzle) throw new NotFoundException('Puzzle not found');
 
-  //   const png = this.shaderRenderer.renderToPng(puzzle.solutionShader.code);
+  @Post(':id/submissions')
+  @ApiOperation({ summary: 'Submit a puzzle rating' })
+  async submitSolution(
+    @Param('id') puzzleId: string,
+    @Body() data: { shaderId: string; rating?: number },
+    @AuthenticatedUser() user: any,
+  ) {
+    return this.prisma.puzzleSubmission.create({
+      data: {
+        puzzleId,
+        userId: user.sub,
+        shaderId: data.shaderId,
+        rating: data.rating,
+      },
+    });
+  }
 
-  //   res.setHeader('Content-Type', 'image/png');
-  //   res.setHeader('Cache-Control', 'public, max-age=86400');
-  //   res.send(png);
-  // }
+  @Post(':id/submissions/v2')
+  @ApiOperation({ summary: 'Submit puzzle shader data' })
+  async submitSolutionV2(
+    @Param('id') puzzleId: string,
+    @Body() data: { graph: any; code?: string; rating?: number },
+    @AuthenticatedUser() user: any,
+  ) {
+    const existing = await this.prisma.puzzleSubmission.findFirst({
+      where: { puzzleId, userId: user.sub },
+      select: { id: true, shaderId: true },
+    });
 
-  // @Post(':id/submissions')
-  // @ApiOperation({ summary: 'Submit an existing shader as a puzzle solution' })
-  // async submitSolution(
-  //   @Param('id') puzzleId: string,
-  //   @Body() data: { shaderId?: string; code?: string },
-  //   @AuthenticatedUser() user: any,
-  // ) {
-  //   const puzzle = await this.prisma.puzzle.findUnique({
-  //     where: { id: puzzleId },
-  //     select: {
-  //       id: true,
-  //       solutionShader: {
-  //         select: { code: true },
-  //       },
-  //     },
-  //   });
+    if (existing) {
+      await this.prisma.shader.update({
+        where: { id: existing .shaderId },
+        data: { graph: data.graph, code: data.code },
+      });
 
-  //   if (!puzzle) throw new NotFoundException('Puzzle not found');
-  //   if (!puzzle.solutionShader)
-  //     throw new NotFoundException('Puzzle solution shader not found');
+      return this.prisma.puzzleSubmission.update({
+        where: { id: existing .id },
+        data: { rating: data.rating },
+      });
+    }
 
-  //   const shader = data.shaderId
-  //     ? await this.prisma.shader.findUnique({
-  //       where: { id: data.shaderId },
-  //       select: { id: true, code: true },
-  //     })
-  //     : data.code
-  //       ? await this.prisma.shader.create({
-  //         data: { graph: {}, code: data.code },
-  //         select: { id: true, code: true },
-  //       })
-  //       : null;
+    const shader = await this.prisma.shader.create({
+      data: { graph: data.graph, code: data.code },
+      select: { id: true },
+    });
 
-  //   if (!shader) throw new NotFoundException('Shader not found');
-
-  //   const rating = compareShaders(shader.code, puzzle.solutionShader.code, true);
-
-  //   return this.prisma.puzzleSubmission.create({
-  //     data: {
-  //       puzzleId,
-  //       userId: user.sub,
-  //       shaderId: shader.id,
-  //       rating,
-  //     },
-  //   });
-  // }
+    return this.prisma.puzzleSubmission.create({
+      data: {
+        puzzleId,
+        userId: user.sub,
+        shaderId: shader.id,
+        rating: data.rating,
+      },
+    });
+  }
 }

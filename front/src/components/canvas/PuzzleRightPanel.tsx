@@ -28,6 +28,7 @@ import {
   type UiNode,
 } from "@/components/state/graphState";
 import { authFetch } from "@/lib/authFetch";
+import { compareShadersDynamic } from "@/webgl/shaderComparator";
 
 interface CompilerNode {
   id: string;
@@ -190,22 +191,42 @@ export function PuzzleRightPanel({ puzzleId }: PuzzleRightPanelProps) {
     });
 
     if (result?.error) return;
+    if (!puzzle?.solutionShader?.code) return;
 
     setIsSubmitting(true);
-    authFetch(`/api/puzzles/${puzzleId}/submissions`, {
-      method: "POST",
-      body: JSON.stringify({ code: fragmentSrc }),
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to submit puzzle solution");
-        return res.json();
+
+    try {
+      const comparison = compareShadersDynamic(
+        puzzle.solutionShader.code,
+        fragmentSrc,
+      );
+
+      authFetch(`/api/puzzles/${puzzleId}/submissions/v2`, {
+        method: "POST",
+        body: JSON.stringify({
+          graph: { nodes: graph.nodes, edges: graph.edges },
+          code: fragmentSrc,
+          rating: comparison.rating,
+        }),
       })
-      .then((data) => {
-        setRating(data.rating);
-        if (puzzle && data.rating >= puzzle.passingRating) setPassedOpen(true);
-      })
-      .catch((err) => setGraphState({ runtimeError: err.message }))
-      .finally(() => setIsSubmitting(false));
+        .then((res) => {
+          if (!res.ok) throw new Error("Failed to submit puzzle solution");
+          return res.json();
+        })
+        .then((data) => {
+          const newRating = data.rating ?? comparison.rating;
+
+          setRating(newRating);
+          if (puzzle && newRating >= puzzle.passingRating) setPassedOpen(true);
+        })
+        .catch((err) => setGraphState({ runtimeError: err.message }))
+        .finally(() => setIsSubmitting(false));
+    } catch (err) {
+      setGraphState({
+        runtimeError: err instanceof Error ? err.message : "Failed to compare shaders",
+      });
+      setIsSubmitting(false);
+    }
   }, [graph.compileRequest]);
 
   const error = graph.compileError ?? graph.runtimeError ?? puzzleError;
