@@ -61,6 +61,18 @@ services:
     networks:
       - app_network
 
+  front:
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+    container_name: react_front
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+    networks:
+      - app_network
+
 networks:
   app_network:
     driver: bridge
