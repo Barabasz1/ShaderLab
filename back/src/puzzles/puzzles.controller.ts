@@ -24,6 +24,36 @@ import { PrismaService } from '../prisma/prisma.service';
 export class PuzzlesController {
   constructor(private prisma: PrismaService) {}
 
+    private async ensureUserPuzzleSubmission(puzzleId: string, userId: string) {
+    const puzzle = await this.prisma.puzzle.findUnique({
+      where: { id: puzzleId },
+      select: { id: true },
+    });
+
+    if (!puzzle) throw new NotFoundException('Puzzle not found');
+
+    const existingSubmission = await this.prisma.puzzleSubmission.findUnique({
+      where: { puzzleId_userId: { puzzleId, userId } },
+      select: { id: true, shaderId: true, rating: true },
+    });
+
+    if (existingSubmission) return existingSubmission;
+
+    const shader = await this.prisma.shader.create({
+      data: { graph: {}, code: '' },
+      select: { id: true },
+    });
+
+    return this.prisma.puzzleSubmission.create({
+      data: {
+        puzzleId,
+        userId,
+        shaderId: shader.id,
+      },
+      select: { id: true, shaderId: true, rating: true },
+    });
+  }
+  
   @Get()
   @Unprotected()
   @ApiBearerAuth('')
@@ -69,6 +99,15 @@ export class PuzzlesController {
   }
 
 
+  @Get(':id/submission-shader')
+  @ApiOperation({ summary: "Return the shader id for the user's puzzle submission" })
+  async getSubmissionShaderId(
+    @Param('id') puzzleId: string,
+    @AuthenticatedUser() user: any,
+  ) {   
+    const submission = await this.ensureUserPuzzleSubmission(puzzleId, user.sub);
+    return { shaderId: submission.shaderId };
+  }
 
   @Post(':id/submissions')
   @ApiOperation({ summary: 'Submit a puzzle rating' })

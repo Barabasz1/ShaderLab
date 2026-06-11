@@ -107,5 +107,6 @@ model PuzzleSubmission {
   shaderId String @map("shader_id")
   shader   Shader @relation("SubmissionShader", fields: [shaderId], references: [id], onDelete: Cascade)
 
+  @@unique([puzzleId, userId])
   @@map("puzzle_submissions")
 }
