@@ -20,6 +20,8 @@ interface EvalNode {
   resolvedType: string
   inputValues: Record<string, unknown>
   inputVars: Record<string, string | null>
+  inputTypes: Record<string, string>
+  inputVarTypes: Record<string, string | null>
   outputVars: Record<string, string>
   controls: Record<string, number>
 }
@@ -45,6 +47,10 @@ function outputVarName(nodeId: string, portId: string) {
 
 function dominantType(a: string, b: string) {
   return (typeRank[b] ?? 0) > (typeRank[a] ?? 0) ? b : a
+}
+
+function portType(type: PortType, resolvedType: string) {
+  return type === 'dyn' ? resolvedType : type
 }
 
 function buildConnectionMap(edges: Edge[]) {
@@ -188,14 +194,20 @@ export function evaluateGraph(
       const outputVars: Record<string, string> = {}
       for (const out of def.outputs ?? []) {
         const varName = outputVarName(nodeId, out.id)
+        const type = portType(out.type, resolvedType)
         outputVars[out.id] = varName
-        outputTypeMap.set(varName, out.type === 'dyn' ? resolvedType : out.type)
+        outputTypeMap.set(varName, type)
       }
 
       const inputVars: Record<string, string | null> = {}
+      const inputTypes: Record<string, string> = {}
+      const inputVarTypes: Record<string, string | null> = {}
       for (const inp of def.inputs ?? []) {
         const src = connMap.get(`${nodeId}::${inp.id}`)
-        inputVars[inp.id] = src ? outputVarName(src.nodeId, src.portId) : null
+        const varName = src ? outputVarName(src.nodeId, src.portId) : null
+        inputVars[inp.id] = varName
+        inputTypes[inp.id] = portType(inp.type, resolvedType)
+        inputVarTypes[inp.id] = varName ? outputTypeMap.get(varName) ?? null : null
       }
 
       const inputValues: Record<string, unknown> = { ...(node.data?.inlineValues ?? {}) }
@@ -211,6 +223,8 @@ export function evaluateGraph(
         resolvedType,
         inputValues,
         inputVars,
+        inputTypes,
+        inputVarTypes,
         outputVars,
         controls: controlValues,
       })

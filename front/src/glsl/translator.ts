@@ -16,6 +16,8 @@ interface EvalNode {
   resolvedType: string
   inputValues: Record<string, unknown>
   inputVars: Record<string, string | null>
+  inputTypes: Record<string, string>
+  inputVarTypes: Record<string, string | null>
   outputVars: Record<string, string>
   controls: Record<string, number>
 }
@@ -40,16 +42,30 @@ function inlineDefault(type: string, inputValues: Record<string, unknown>, portI
   return scalarLiteral(inputValues[portId])
 }
 
+function castExpr(expr: string, fromType: string | null, toType: string): string {
+  if (!fromType || fromType === toType || fromType === 'dyn' || toType === 'dyn') return expr
+  if (fromType === 'bool' || toType === 'bool') return expr
+  if (toType === 'float') return fromType === 'float' ? expr : `${expr}.x`
+  if (fromType === 'float') return `${toType}(${expr})`
+  if (toType === 'vec2') return `${expr}.xy`
+  if (toType === 'vec3') return fromType === 'vec2' ? `vec3(${expr}, 0.0)` : `${expr}.xyz`
+  if (toType === 'vec4') {
+    if (fromType === 'vec2') return `vec4(${expr}, 0.0, 1.0)`
+    if (fromType === 'vec3') return `vec4(${expr}, 1.0)`
+  }
+  return expr
+}
+
 function generateNodeStatements(evalNode: EvalNode, allNodeDefs: Record<string, NodeDef>): string[] {
-  const { nodeType, def, resolvedType, inputValues, inputVars, outputVars, controls } = evalNode
+  const { nodeType, def, resolvedType, inputValues, inputVars, inputTypes, inputVarTypes, outputVars, controls } = evalNode
 
   const nodeDef = allNodeDefs[nodeType]
   if (!nodeDef?.glsl) return []
 
   const inputExprs = (def.inputs ?? []).map((inp) => {
     const v = inputVars[inp.id]
-    if (v) return v
-    const portType = inp.type === 'dyn' ? resolvedType : inp.type
+    const portType = inputTypes[inp.id] ?? (inp.type === 'dyn' ? resolvedType : inp.type)
+    if (v) return castExpr(v, inputVarTypes[inp.id], portType)
     return inlineDefault(portType, inputValues, inp.id)
   })
 
@@ -83,7 +99,9 @@ export function translateToGLSL(
   }
 
   if (outputVarName) {
-    lines.push(`  gl_FragColor = ${outputVarName};`)
+    const outputEvalNode = evalNodes.find((en) => en.nodeType === 'output')
+    const outputVarType = outputEvalNode?.inputVarTypes['color'] ?? null
+    lines.push(`  gl_FragColor = ${castExpr(outputVarName, outputVarType, 'vec4')};`)
   } else {
     lines.push('  gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);')
   }

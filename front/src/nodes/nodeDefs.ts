@@ -33,8 +33,13 @@ export const PortTypeColors: Record<PortType, string> = {
 
 export const portTypeLabel = (type: PortType) => type;
 
+const numericPortTypes: PortType[] = ["float", "vec2", "vec3", "vec4"];
+
 export const canConnectPortTypes = (source: PortType, target: PortType) =>
-  source === target || source === "dyn" || target === "dyn";
+  source === target ||
+  source === "dyn" ||
+  target === "dyn" ||
+  (numericPortTypes.includes(source) && numericPortTypes.includes(target));
 
 const oneValue = (resolvedType: string) =>
   resolvedType === "float" ? "1.0" : `${resolvedType}(1.0)`;
@@ -213,7 +218,7 @@ export const nodeDefs: Record<string, NodeDef> = {
   output: {
     label: "Output",
     category: NodeCategories.OUTPUT,
-    inputs: [{ id: "color", label: "Color", type: "vec4" }],
+    inputs: [{ id: "color", label: "RGBA", type: "vec4" }],
     outputs: [],
     controls: [],
     deletable: false,
