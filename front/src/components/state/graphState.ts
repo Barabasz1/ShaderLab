@@ -77,7 +77,6 @@ export const saveGraphSnapshot = (name = "shader") => {
     savedAt: new Date().toISOString(),
     nodes: state.nodes,
     edges: state.edges,
-    glslCode: state.glslCode,
   };
 
   downloadFile(

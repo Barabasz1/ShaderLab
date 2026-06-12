@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Plus, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { type ChangeEvent, useRef, useState } from "react";
+import { Plus, Loader2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProjectCard } from "@/components/dashboard/ProjectCard";
 import { Link } from "@tanstack/react-router";
@@ -38,11 +38,11 @@ export interface DashboardProps {
   title: string;
   subtitle: string;
   data:
-    | {
-        projects: BackendProject[];
-        total: number;
-      }
-    | undefined;
+  | {
+    projects: BackendProject[];
+    total: number;
+  }
+  | undefined;
   isLoading: boolean;
   error: Error | null;
   page: number;
@@ -61,12 +61,66 @@ export function Dashboard({
   page,
   pageSize,
   onPageChange,
-  }: DashboardProps) {
+}: DashboardProps) {
   const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
   const projects = data?.projects ?? [];
   const totalPages = Math.ceil((data?.total ?? 0) / pageSize);
+
+  const handleImport = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+    setImportError(null);
+
+    try {
+      const json = JSON.parse(await file.text());
+
+      if (!Array.isArray(json?.nodes) || !Array.isArray(json?.edges)) {
+        setImportError("Invalid project JSON");
+        return;
+      }
+
+      const projectRes = await authFetch(`/api/projects`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: file.name.replace(/\.json$/i, ""),
+        }),
+      });
+      if (!projectRes.ok) throw new Error("Failed to create project");
+
+      const project = await projectRes.json();
+      const projectId = project.id ?? project.projectId;
+      if (!projectId) throw new Error("Failed to create project");
+
+      const shaderRes = await authFetch(
+        `/api/shaders/project/${projectId}/autosave`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            graph: { nodes: json.nodes, edges: json.edges },
+            code: json.glslCode ?? "",
+          }),
+        },
+      );
+
+      if (!shaderRes.ok) throw new Error("Failed to import project");
+
+      queryClient.invalidateQueries({ queryKey: ["projects", page] });
+    } catch (err) {
+      setImportError(err instanceof Error ? err.message : "Failed to import project");
+    } finally {
+      setIsImporting(false);
+      event.target.value = "";
+    }
+  };
 
   const handleDelete = async () => {
     if (!deletingId) return;
@@ -74,7 +128,7 @@ export function Dashboard({
     try {
       await authFetch(`/api/projects/${deletingId}`, { method: "DELETE" });
       setDeletingId(null);
-      queryClient.invalidateQueries({queryKey: ["projects", page]});
+      queryClient.invalidateQueries({ queryKey: ["projects", page] });
     } catch (err) {
       console.error("Failed to delete:", err);
     } finally {
@@ -89,13 +143,40 @@ export function Dashboard({
           <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
           <p className="text-muted-foreground mt-2">{subtitle}</p>
         </div>
-        <Link to="/createProject">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            New Project
+        <div className="flex items-center gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json,application/json"
+            className="hidden"
+            onChange={handleImport}
+          />
+          <Button
+            variant="outline"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isImporting}
+          >
+            {isImporting ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Upload className="mr-2 h-4 w-4" />
+            )}
+            Import
           </Button>
-        </Link>
+          <Link to="/createProject">
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              New Project
+            </Button>
+          </Link>
+        </div>
       </div>
+
+      {importError && (
+        <div className="text-red-500 bg-red-500/10 p-4 rounded-md mb-4">
+          {importError}
+        </div>
+      )}
 
       {isLoading ? (
         <div className="flex justify-center items-center h-64">
@@ -126,7 +207,7 @@ export function Dashboard({
                 lastModified={new Date(project.updatedAt).toLocaleDateString()}
                 thumbnailGradient={getGradientForId(project.id)}
                 onDelete={setDeletingId}
-                onEdit={() => {}}
+                onEdit={() => { }}
                 allowEdit
               />
             ))}

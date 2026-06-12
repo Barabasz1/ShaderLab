@@ -179,51 +179,53 @@ export function NodeCard({
 
             return (
               <div key={p.id} className="flex items-center gap-1">
-                <div
-                  className={`w-3.5 h-3.5 rounded-full border-[2.5px] border-white relative z-10 transition-[transform] duration-200 ${readOnly ? "" : "cursor-crosshair hover:scale-[1.35]"}`}
-                  style={{ background: PortTypeColors[p.type] }}
-                  ref={(el) => {
-                    if (el) anchorRefs.current[`${node.id}:in:${p.id}`] = el;
-                  }}
-                  onMouseDown={(e) => onAnchorDown(e, node.id, p.id, "in")}
-                  onMouseUp={(e) => onAnchorUp(e, node.id, p.id, "in")}
-                  onClick={(e) => {
-                    e.stopPropagation();
+                <div className="relative w-3.5 h-3.5 shrink-0">
+                  <div
+                    className={`w-3.5 h-3.5 rounded-full border-[2.5px] border-white relative z-10 transition-[transform] duration-200 ${readOnly ? "" : "cursor-crosshair hover:scale-[1.35]"}`}
+                    style={{ background: PortTypeColors[p.type] }}
+                    ref={(el) => {
+                      if (el) anchorRefs.current[`${node.id}:in:${p.id}`] = el;
+                    }}
+                    onMouseDown={(e) => onAnchorDown(e, node.id, p.id, "in")}
+                    onMouseUp={(e) => onAnchorUp(e, node.id, p.id, "in")}
+                    onClick={(e) => {
+                      e.stopPropagation();
 
-                    if (isConnected) {
-                      setOpenInputs((current) => {
-                        const next = new Set(current);
-                        next.delete(p.id);
-                        return next;
-                      });
-                      return;
-                    }
-
-                    setOpenInputs((current) => {
-                      const next = new Set(current);
-
-                      if (next.has(p.id)) {
-                        next.delete(p.id);
-                      } else {
-                        next.add(p.id);
+                      if (isConnected) {
+                        setOpenInputs((current) => {
+                          const next = new Set(current);
+                          next.delete(p.id);
+                          return next;
+                        });
+                        return;
                       }
 
-                      return next;
-                    });
-                  }}
-                />
+                      setOpenInputs((current) => {
+                        const next = new Set(current);
+
+                        if (next.has(p.id)) {
+                          next.delete(p.id);
+                        } else {
+                          next.add(p.id);
+                        }
+
+                        return next;
+                      });
+                    }}
+                  />
+
+                  {isOpen && (
+                    <InlineInputPopup
+                      node={node}
+                      port={p}
+                      onInlineValueChange={onInlineValueChange}
+                    />
+                  )}
+                </div>
 
                 <span className="text-[10px] font-mono text-muted-foreground leading-none">
                   {p.label}
                 </span>
-
-                {isOpen && (
-                  <InlineInputPopup
-                    node={node}
-                    port={p}
-                    onInlineValueChange={onInlineValueChange}
-                  />
-                )}
               </div>
             );
           })}

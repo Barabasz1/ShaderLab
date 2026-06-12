@@ -15,12 +15,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import {
   requestCompile,
   saveGraphSnapshot,
-  setGraphState,
 } from "@/components/state/graphState";
-import { Download, Loader2, Play, Redo2, Save, Undo2 } from "lucide-react";
+import { Download, Loader2, Play, Save } from "lucide-react";
 import { useProjectLoader } from "@/hooks/useProjectLoader";
 import { useSaveProject } from "@/hooks/useSaveProject";
-import { useEffect } from "react";
+import { useShaderLoader } from "@/hooks/useShaderLoader";
+import { useSaveShader } from "@/hooks/useSaveShader";
 
 interface EditorSearch {
   puzzleId?: string;
@@ -51,13 +51,6 @@ function ProjectEditor({ projectId }: { projectId: string }) {
   return (
     <div className="h-svh flex flex-col overflow-hidden">
       <Topbar>
-        <Button variant="outline" size="sm" className="h-7 px-2 text-xs">
-          <Undo2 className="w-3.5 h-3.5" />
-        </Button>
-        <Button variant="outline" size="sm" className="h-7 px-2 text-xs">
-          <Redo2 className="w-3.5 h-3.5" />
-        </Button>
-        <Separator orientation="vertical" className="h-6" />
         <Button
           variant="outline"
           size="sm"
@@ -125,19 +118,26 @@ function PuzzleEditor({
   shaderId: string;
   puzzleId: string;
 }) {
-  useEffect(() => {
-    setGraphState({
-      nodes: [],
-      edges: [],
-      glslCode: "",
-      compileError: null,
-      runtimeError: null,
-    });
-  }, [shaderId, puzzleId]);
+  const { isLoading } = useShaderLoader(shaderId);
+  const { save, isSaving } = useSaveShader(shaderId);
 
   return (
     <div className="h-svh flex flex-col overflow-hidden">
       <Topbar>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-7 px-2 text-xs"
+          onClick={() => save()}
+          disabled={isSaving}
+        >
+          {isSaving ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <Save className="w-3.5 h-3.5" />
+          )}
+          Save
+        </Button>
         <Button
           variant="outline"
           size="sm"
@@ -165,7 +165,13 @@ function PuzzleEditor({
             className="flex-1 min-h-0"
           >
             <ResizablePanel defaultSize={"75%"} minSize={"40%"}>
-              <Canvas readOnly={false} />
+              {isLoading ? (
+                <div className="h-full flex items-center justify-center">
+                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <Canvas readOnly={false} />
+              )}
             </ResizablePanel>
             <ResizableHandle />
             <ResizablePanel defaultSize={"25%"} minSize={"20%"} maxSize={"40%"}>

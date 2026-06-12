@@ -61,6 +61,7 @@ interface PuzzleDetails {
 
 interface PuzzleRightPanelProps {
   puzzleId: string;
+  submissionShaderId?: string;
 }
 
 const puzzleVertexSrc = `

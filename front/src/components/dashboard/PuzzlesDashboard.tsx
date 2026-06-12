@@ -16,6 +16,7 @@ export interface PuzzleListItem {
   id: string;
   name: string | null;
   description: string | null;
+  rating?: number | null;
 }
 
 interface PuzzlesDashboardProps {
@@ -127,7 +128,9 @@ export function PuzzlesDashboard({
 
                   <CardFooter className="flex justify-between items-center border-t pt-6 mt-auto">
                     <span className="text-sm text-muted-foreground">
-                      Puzzle challenge
+                      {puzzle.rating === null || puzzle.rating === undefined
+                        ? "No rating yet"
+                        : `Your rating: ${Math.round(puzzle.rating * 100)}%`}
                     </span>
                     <Button
                       variant="default"

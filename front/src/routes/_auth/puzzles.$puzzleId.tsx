@@ -11,8 +11,10 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { createFileRoute } from "@tanstack/react-router";
-import { requestCompile, setGraphState, saveGraphSnapshot } from "@/components/state/graphState";
-import { Play, Download, Loader2 } from "lucide-react";
+import { requestCompile, saveGraphSnapshot } from "@/components/state/graphState";
+import { useShaderLoader } from "@/hooks/useShaderLoader";
+import { useSaveShader } from "@/hooks/useSaveShader";
+import { Play, Download, Loader2, Save } from "lucide-react";
 import { useEffect, useState } from "react";
 import { authFetch } from "@/lib/authFetch";
 
@@ -35,30 +37,17 @@ function RouteComponent() {
   const { puzzleId } = Route.useParams();
   const { shaderId } = Route.useSearch();
   const [submissionShaderId, setSubmissionShaderId] = useState<string | undefined>(shaderId);
-  const [shaderIdError, setShaderIdError] = useState<string | null>(null);
   const [isLoadingShaderId, setIsLoadingShaderId] = useState(!shaderId);
-
-  useEffect(() => {
-    setGraphState({
-      nodes: [],
-      edges: [],
-      glslCode: "",
-      compileError: null,
-      runtimeError: null,
-    });
-  }, [puzzleId]);
 
   useEffect(() => {
     if (shaderId) {
       setSubmissionShaderId(shaderId);
       setIsLoadingShaderId(false);
-      setShaderIdError(null);
       return;
     }
 
     let cancelled = false;
     setIsLoadingShaderId(true);
-    setShaderIdError(null);
 
     authFetch(`/api/puzzles/${puzzleId}/submission-shader`)
       .then((res) => {
@@ -71,7 +60,7 @@ function RouteComponent() {
       .catch((err) => {
         if (!cancelled) {
           setSubmissionShaderId(undefined);
-          setShaderIdError(err instanceof Error ? err.message : "Failed to load shader id");
+          console.error(err);
         }
       })
       .finally(() => {
@@ -83,9 +72,26 @@ function RouteComponent() {
     };
   }, [puzzleId, shaderId]);
 
+  const { isLoading } = useShaderLoader(submissionShaderId);
+  const { save, isSaving } = useSaveShader(submissionShaderId);
+
   return (
     <div className="h-svh flex flex-col overflow-hidden">
       <Topbar>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-7 px-2 text-xs"
+          onClick={() => save()}
+          disabled={isSaving || !submissionShaderId}
+        >
+          {isSaving ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <Save className="w-3.5 h-3.5" />
+          )}
+          Save
+        </Button>
         <Button
           variant="outline"
           size="sm"
@@ -106,11 +112,6 @@ function RouteComponent() {
         <Separator orientation="vertical" className="h-6" />
       </Topbar>
 
-      {shaderIdError && (
-        <div className="px-3 py-2 text-sm text-red-600 bg-red-500/10 border-b border-red-500/20">
-          {shaderIdError}
-        </div>
-      )}
 
       <SidebarProvider className="min-h-0 w-full h-[calc(100svh-2.75rem)]!">
         <LeftSidebar />
@@ -120,7 +121,13 @@ function RouteComponent() {
             className="flex-1 min-h-0"
           >
             <ResizablePanel defaultSize={"75%"} minSize={"40%"}>
-              <Canvas readOnly={false} />
+              {isLoading || isLoadingShaderId ? (
+                <div className="h-full flex items-center justify-center">
+                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <Canvas readOnly={false} />
+              )}
             </ResizablePanel>
             <ResizableHandle />
             <ResizablePanel defaultSize={"25%"} minSize={"20%"} maxSize={"40%"}>

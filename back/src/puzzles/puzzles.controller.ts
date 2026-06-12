@@ -55,18 +55,31 @@ export class PuzzlesController {
   }
   
   @Get()
-  @Unprotected()
-  @ApiBearerAuth('')
   @ApiOperation({
     summary: 'Get all puzzles',
     description:
-      'Returns a list of all available puzzles. No authentication required.',
+      "Returns a list of all available puzzles with the user's rating.",
   })
   @ApiResponse({ status: 200, description: 'List of puzzles returned.' })
-  async getPuzzles() {
-    return this.prisma.puzzle.findMany({
+  async getPuzzles(@AuthenticatedUser() user: any) {
+    const puzzles = await this.prisma.puzzle.findMany({
       select: { id: true, name: true, description: true },
     });
+    const submissions = await this.prisma.puzzleSubmission.findMany({
+      where: {
+        userId: user.sub,
+        puzzleId: { in: puzzles.map((puzzle) => puzzle.id) },
+      },
+      select: { puzzleId: true, rating: true },
+    });
+    const ratings = new Map(
+      submissions.map((submission) => [submission.puzzleId, submission.rating]),
+    );
+
+    return puzzles.map((puzzle) => ({
+      ...puzzle,
+      rating: ratings.get(puzzle.id) ?? null,
+    }));
   }
 
   @Get(':id')
