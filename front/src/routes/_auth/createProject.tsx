@@ -1,6 +1,6 @@
 import { Topbar } from "@/components/layout/Topbar";
 import { ProjectForm } from "@/components/projects/ProjectForm";
-import keycloak from "@/lib/keycloak";
+import { authFetch } from "@/lib/authFetch";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_auth/createProject")({
@@ -15,17 +15,19 @@ function CreateProjectScreen() {
     description: string,
     isPublic: boolean,
   ) => {
-    await keycloak.updateToken(30);
-    const res = await fetch("/api/projects", {
+    const res = await authFetch("/api/projects", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${keycloak.token}`,
-      },
       body: JSON.stringify({ name: title, description, isPublic }),
     });
     if (!res.ok) throw new Error("Failed to create project");
     const project = await res.json();
+    if (isPublic) {
+      const updateRes = await authFetch(`/api/projects/${project.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ name: title, description, isPublic }),
+      });
+      if (!updateRes.ok) throw new Error("Failed to update");
+    }
     navigate({ to: `/${project.id}/editor` });
   };
 
