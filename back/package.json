@@ -19,7 +19,11 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "db:push": "prisma db push",
-    "seed:puzzles": "tsx scripts/seed-puzzles-dir.ts"
+    "seed:puzzles": "tsx scripts/seed-puzzles-dir.ts",
+    "prisma:generate": "prisma generate",
+    "migrate:dev": "prisma migrate dev --config ./prisma.config.ts",
+    "migrate:deploy": "prisma migrate deploy --config ./prisma.config.ts",
+    "migrate:reset": "prisma migrate reset --config ./prisma.config.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

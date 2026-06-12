@@ -13,10 +13,7 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 RUN npm ci --omit=dev --legacy-peer-deps
 
-RUN npm install -g prisma --legacy-peer-deps
-
 COPY --from=builder /usr/src/app/prisma ./prisma
-COPY --from=builder /usr/src/app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /usr/src/app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /usr/src/app/node_modules/@prisma/client ./node_modules/@prisma/client
 COPY --from=builder /usr/src/app/dist ./dist
@@ -26,4 +23,4 @@ USER node
 EXPOSE 3000
 
 
-CMD ["sh", "-c", "prisma db push && node dist/src/main.js"]
+CMD ["sh", "-c", "node dist/src/main.js"]
