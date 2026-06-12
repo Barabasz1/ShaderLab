@@ -233,7 +233,7 @@ export function PuzzleRightPanel({ puzzleId }: PuzzleRightPanelProps) {
   const error = graph.compileError ?? graph.runtimeError ?? puzzleError;
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
+    <div className="h-full min-w-0 flex flex-col overflow-hidden">
       <div className="h-11 px-3 flex items-center justify-between shrink-0 bg-background z-10">
         <span className="text-[13px] font-semibold flex items-center gap-2">
           <MonitorPlay className="w-4 h-4 text-brand" />
@@ -242,9 +242,9 @@ export function PuzzleRightPanel({ puzzleId }: PuzzleRightPanelProps) {
         {isSubmitting && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
       </div>
       <Separator />
-      <div className="flex flex-col h-full overflow-hidden">
-        <ScrollArea className="flex-1 min-h-0">
-          <div className="p-4 flex flex-col gap-3">
+      <div className="flex flex-col h-full min-w-0 overflow-hidden">
+        <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden">
+          <div className="p-4 min-w-0 flex flex-col gap-3">
             <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Your Preview
             </div>
@@ -267,6 +267,13 @@ export function PuzzleRightPanel({ puzzleId }: PuzzleRightPanelProps) {
               )}
             </div>
 
+            {puzzle && (
+              <div className="rounded-md border bg-muted/30 p-3 flex items-center justify-between">
+                <span className="text-sm font-medium">Required rating</span>
+                <Badge variant="outline">{Math.round(puzzle.passingRating * 100)}%</Badge>
+              </div>
+            )}
+
             {rating !== null && (
               <div className="rounded-md border bg-muted/30 p-3 flex items-center justify-between">
                 <span className="text-sm font-medium">Rating</span>
@@ -283,8 +290,8 @@ export function PuzzleRightPanel({ puzzleId }: PuzzleRightPanelProps) {
 
           <Separator />
 
-          <div className="p-4 flex flex-col gap-3 min-h-80">
-            <div className="flex items-center justify-between shrink-0">
+          <div className="p-4 min-w-0 flex flex-col gap-3 min-h-80">
+            <div className="flex items-center justify-between shrink-0 min-w-0">
               <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
                 <TerminalSquare className="w-4 h-4" />
                 Generated GLSL
@@ -311,7 +318,7 @@ export function PuzzleRightPanel({ puzzleId }: PuzzleRightPanelProps) {
                 </Button>
               </div>
             </div>
-            <ScrollArea className="h-80 rounded-md bg-muted/30 border shadow-inner">
+            <ScrollArea className="h-80 min-w-0 rounded-md bg-muted/30 border shadow-inner">
               <div className="p-4 min-w-max">
                 <pre className="text-[11px] text-[#c9d1d9] font-mono leading-relaxed">
                   {graph.glslCode || "Run to see generated GLSL"}
@@ -321,7 +328,7 @@ export function PuzzleRightPanel({ puzzleId }: PuzzleRightPanelProps) {
               <ScrollBar orientation="vertical" />
             </ScrollArea>
           </div>
-        </ScrollArea>
+        </div>
       </div>
 
       <AlertDialog open={passedOpen} onOpenChange={setPassedOpen}>

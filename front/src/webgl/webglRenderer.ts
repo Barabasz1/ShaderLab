@@ -1,3 +1,11 @@
+import {
+  createProgram,
+  maxDevicePixelRatio,
+  quadVertexCount,
+  quadVertexData,
+  setShaderUniforms,
+} from "@/webgl/webglUtils";
+
 interface Renderer {
   compile: (vertSrc: string, fragSrc: string) => { error: string | null }
   destroy: () => void
@@ -11,17 +19,16 @@ export function createRenderer(canvas: HTMLCanvasElement): Renderer {
   let program: WebGLProgram | null = null
   let rafId: number | null = null
   let startTime = performance.now()
-  let locations: { pos: number; time: WebGLUniformLocation | null; res: WebGLUniformLocation | null } | null = null
 
   const quadBuffer = gl.createBuffer()
   gl.bindBuffer(gl.ARRAY_BUFFER, quadBuffer)
   gl.bufferData(
     gl.ARRAY_BUFFER,
-    new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]),
+    quadVertexData,
     gl.STATIC_DRAW
   )
 
-  const dpr = Math.min(window.devicePixelRatio || 1, 1.5)
+  const dpr = Math.min(window.devicePixelRatio || 1, maxDevicePixelRatio)
 
   const resize = (width: number, height: number) => {
     const w = Math.floor(width * dpr)
@@ -39,48 +46,13 @@ export function createRenderer(canvas: HTMLCanvasElement): Renderer {
   })
   observer.observe(canvas)
 
-  function compileShader(src: string, type: number): WebGLShader {
-    const shader = gl.createShader(type)
-    if (!shader) throw new Error('Failed to create shader')
-    gl.shaderSource(shader, src)
-    gl.compileShader(shader)
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-      const log = gl.getShaderInfoLog(shader)
-      gl.deleteShader(shader)
-      throw new Error(log ?? 'Shader compile error')
-    }
-    return shader
-  }
-
-  function linkProgram(vertSrc: string, fragSrc: string): WebGLProgram {
-    const vert = compileShader(vertSrc, gl.VERTEX_SHADER)
-    const frag = compileShader(fragSrc, gl.FRAGMENT_SHADER)
-    const prog = gl.createProgram()
-    if (!prog) throw new Error('Failed to create program')
-
-    gl.attachShader(prog, vert)
-    gl.attachShader(prog, frag)
-    gl.linkProgram(prog)
-
-    gl.deleteShader(vert)
-    gl.deleteShader(frag)
-
-    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
-      const log = gl.getProgramInfoLog(prog)
-      gl.deleteProgram(prog)
-      throw new Error(log ?? 'Program link error')
-    }
-    return prog
-  }
-
   function render(now: number) {
-    if (!program || !locations) return
+    if (!program) return
     const t = (now - startTime) / 1000
 
-    gl.uniform1f(locations.time, t)
-    gl.uniform2f(locations.res, canvas.width, canvas.height)
+    setShaderUniforms(gl, program, canvas.width, canvas.height, t)
 
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, quadVertexCount)
     rafId = requestAnimationFrame(render)
   }
 
@@ -94,22 +66,15 @@ export function createRenderer(canvas: HTMLCanvasElement): Renderer {
   function compile(vertSrc: string, fragSrc: string): { error: string | null } {
     stopLoop()
     try {
-      const newProg = linkProgram(vertSrc, fragSrc)
+      const newProg = createProgram(gl, vertSrc, fragSrc)
       if (program) gl.deleteProgram(program)
       program = newProg
       startTime = performance.now()
 
       gl.useProgram(program)
-
-      locations = {
-        pos: gl.getAttribLocation(program, 'a_position'),
-        time: gl.getUniformLocation(program, 'u_time'),
-        res: gl.getUniformLocation(program, 'u_resolution'),
-      }
-
       gl.bindBuffer(gl.ARRAY_BUFFER, quadBuffer)
-      gl.enableVertexAttribArray(locations.pos)
-      gl.vertexAttribPointer(locations.pos, 2, gl.FLOAT, false, 0, 0)
+      gl.enableVertexAttribArray(0)
+      gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0)
 
       rafId = requestAnimationFrame(render)
       return { error: null }

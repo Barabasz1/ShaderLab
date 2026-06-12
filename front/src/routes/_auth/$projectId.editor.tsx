@@ -91,7 +91,7 @@ function ProjectEditor({ projectId }: { projectId: string }) {
             orientation="horizontal"
             className="flex-1 min-h-0"
           >
-            <ResizablePanel defaultSize={"75%"} minSize={"40%"}>
+            <ResizablePanel defaultSize={75} minSize={40}>
               {isLoading ? (
                 <div className="h-full flex items-center justify-center">
                   <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
@@ -101,7 +101,7 @@ function ProjectEditor({ projectId }: { projectId: string }) {
               )}
             </ResizablePanel>
             <ResizableHandle />
-            <ResizablePanel defaultSize={"20%"} minSize={"15%"} maxSize={"30%"}>
+            <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
               <RightPanel />
             </ResizablePanel>
           </ResizablePanelGroup>
@@ -164,7 +164,7 @@ function PuzzleEditor({
             orientation="horizontal"
             className="flex-1 min-h-0"
           >
-            <ResizablePanel defaultSize={"75%"} minSize={"40%"}>
+            <ResizablePanel defaultSize={75} minSize={40}>
               {isLoading ? (
                 <div className="h-full flex items-center justify-center">
                   <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
@@ -174,7 +174,7 @@ function PuzzleEditor({
               )}
             </ResizablePanel>
             <ResizableHandle />
-            <ResizablePanel defaultSize={"25%"} minSize={"20%"} maxSize={"40%"}>
+            <ResizablePanel defaultSize={25} minSize={20} maxSize={40}>
               <PuzzleRightPanel
                 puzzleId={puzzleId}
                 submissionShaderId={shaderId}

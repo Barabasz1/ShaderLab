@@ -43,7 +43,7 @@ function RouteComponent() {
             orientation="horizontal"
             className="flex-1 min-h-0"
           >
-            <ResizablePanel defaultSize={"75%"} minSize={"40%"}>
+            <ResizablePanel defaultSize={75} minSize={40}>
               {isLoading ? (
                 <div className="h-full flex items-center justify-center">
                   <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
@@ -53,7 +53,7 @@ function RouteComponent() {
               )}
             </ResizablePanel>
             <ResizableHandle />
-            <ResizablePanel defaultSize={"25%"} minSize={"15%"} maxSize={"40%"}>
+            <ResizablePanel defaultSize={25} minSize={15} maxSize={40}>
               <RightPanel />
             </ResizablePanel>
           </ResizablePanelGroup>

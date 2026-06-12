@@ -18,8 +18,23 @@ function ResizablePanelGroup({
   )
 }
 
-function ResizablePanel({ ...props }: ResizablePrimitive.PanelProps) {
-  return <ResizablePrimitive.Panel data-slot="resizable-panel" {...props} />
+const toPanelSize = (size: unknown) =>
+  typeof size === "number" ? `${size}%` : size
+
+function ResizablePanel({
+  defaultSize,
+  minSize,
+  maxSize,
+  ...props
+}: ResizablePrimitive.PanelProps) {
+  const panelProps = {
+    ...props,
+    defaultSize: toPanelSize(defaultSize),
+    minSize: toPanelSize(minSize),
+    maxSize: toPanelSize(maxSize),
+  } as ResizablePrimitive.PanelProps
+
+  return <ResizablePrimitive.Panel data-slot="resizable-panel" {...panelProps} />
 }
 
 function ResizableHandle({
