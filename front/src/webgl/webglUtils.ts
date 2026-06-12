@@ -8,10 +8,13 @@ export const pixelStride = 4;
 export const comparedPixelChannels = 3;
 export const maxDevicePixelRatio = 1.5;
 
-export const fullScreenVertexSrc = `
+export const fullScreenVertexSrc = `#version 100
+precision mediump float;
 attribute vec2 a_position;
+varying vec2 v_uv;
 
 void main() {
+  v_uv = a_position * 0.5 + 0.5;
   gl_Position = vec4(a_position, 0.0, 1.0);
 }
 `;
